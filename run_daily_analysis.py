@@ -17,9 +17,9 @@ ANALYSIS_FOLDER_NAME = "Analysis"
 # Map protocol prefix to script
 protocol_to_script = {
     'FreeLick': 'analyze_free_licking.py',
-    #'SpoutSamp': 'analyze_spout_sampling.py',
+    'SpoutSamp': 'analyze_spout_sampling.py',
     '2ChoiceAuditory': 'analyze_2choice_auditory.py',
-    #'AdaptSensorimotor': 'analyze_adapt_sensorimotor.py',
+    'AdaptSensorimotor': 'analyze_adapt_sensorimotor.py',
     #'AdaptSensorimotor_distractor': 'analyze_adapt_sensorimotor_distractor.py'
 }
 

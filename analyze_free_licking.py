@@ -49,7 +49,7 @@ def analyze(file_path, animal, date, box, output_dir):
     x_pos = [0.5, 1.0, 1.5]
 
     fig = plt.figure(figsize=(12, 12))
-    fig.suptitle(f"Animal: {animal} | Date: {date} | Task: Free Licking", fontsize=14)
+    fig.suptitle(f"Free Licking | Animal: {animal} | Date: {date} | Box {box}", fontsize=14)
     gs = gridspec.GridSpec(3, 2, height_ratios=[1, 1, 1], width_ratios=[1, 1], hspace=0.6)
 
     # QW background color map
