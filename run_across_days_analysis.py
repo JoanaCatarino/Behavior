@@ -11,12 +11,12 @@ from pathlib import Path
 from collections import defaultdict
 
 # Base data directory
-DATA_DIR = Path(r"Z:/dmclab/Joana/Behavior/Data")
+DATA_DIR = Path(r"L:/dmclab/Joana/Behavior/Data")
 
 # Map protocol prefix to script
 protocol_to_script = {
     'FreeLick': 'general_free_licking.py',
-    #'SpoutSamp': 'general_spout_sampling.py',
+    'SpoutSamp': 'general_spout_sampling.py',
     #'2ChoiceAuditory': 'general_2choice_auditory.py',
     #'AdaptSensorimotor': 'general_adapt_sensorimotor.py',
     # 'AdaptSensorimotor_distractor': 'analyze_adapt_sensorimotor_distractor.py'
@@ -69,6 +69,18 @@ def analyze_all_animals():
             if not script:
                 print(f"⚠️  No analysis script for protocol '{protocol}' — skipping.")
                 continue
+            
+            '''
+            uncomment when we finish scripts --> to not overwrite data and analyze all animals everytime
+            # Check if already analyzed
+            output_folder = DATA_DIR / animal_id / "Analysis" / "Across-days"
+            output_plot = output_folder / f"{animal_id}_{protocol}_across_days.png"
+            output_csv = output_folder / f"{animal_id}_{protocol}_across_days.csv"
+
+            if output_plot.exists() and output_csv.exists():
+                print(f"⏭️  Skipping {protocol} for animal {animal_id} — already analyzed.")
+                continue
+            '''
 
             print(f"📊 Running {script} on {len(files)} files for protocol '{protocol}' for animal {animal_id}")
 

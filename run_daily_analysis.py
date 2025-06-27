@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 
 # Base data directory
-DATA_DIR = Path(r"Z:/dmclab/Joana/Behavior/Data")
+DATA_DIR = Path(r"L:/dmclab/Joana/Behavior/Data")
 ANALYSIS_FOLDER_NAME = "Analysis"
 
 # Map protocol prefix to script
