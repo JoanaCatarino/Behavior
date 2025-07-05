@@ -22,7 +22,7 @@ def analyze(file_path, animal, date, box, output_dir):
     fig_title = f"{protocol} | Animal: {animal} | Date: {date} | Box {box}"
 
     # Extract tone-spout mapping for a specific animal
-    mapping_file_path = Path(r"Z:/dmclab/Joana/Behavior/Spout-tone map/spout_tone_generator.csv")
+    mapping_file_path = Path(r"L:/dmclab/Joana/Behavior/Spout-tone map/spout_tone_generator.csv")
     spout_mapping_df = pd.read_csv(mapping_file_path)
     animal_id = int(animal)
     mapping_row = spout_mapping_df[spout_mapping_df["Animal"] == animal_id].iloc[0]

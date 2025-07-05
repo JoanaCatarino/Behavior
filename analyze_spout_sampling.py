@@ -40,7 +40,7 @@ def analyze(file_path, animal, date, box, output_dir):
     df["color"] = df["reward"].apply(lambda r: "green" if r == 1 else "gray")
 
     # Compute bar plot values
-    total_trials = len(df)
+    total_licks = len(df)
     correct_trials = df[(df["lick"] == 1) & (df["reward"] == 1)].shape[0]
     incorrect_trials = df[(df["lick"] == 1) & (df["reward"] == 0)].shape[0]
     correct_left = df[(df["left_spout"] == 1) & (df["reward"] == 1)].shape[0]
@@ -49,11 +49,11 @@ def analyze(file_path, animal, date, box, output_dir):
     incorrect_right = df[(df["right_spout"] == 1) & (df["reward"] == 0)].shape[0]
 
     bar_labels = [
-        "Total Trials", "Correct Trials", "Incorrect Trials",
+        "Total Licks", "Correct Trials", "Incorrect Trials",
         "Correct Left", "Incorrect Left", "Correct Right", "Incorrect Right"
     ]
     bar_values = [
-        total_trials, correct_trials, incorrect_trials,
+        total_licks, correct_trials, incorrect_trials,
         correct_left, incorrect_left, correct_right, incorrect_right
     ]
     bar_colors = [

@@ -26,7 +26,6 @@ def extract_metadata(file_path):
 def load_trial_counts(file_path):
     df = pd.read_csv(file_path)
 
-    total_trials = len(df)
     correct = df[(df["lick"] == 1) & (df["reward"] == 1)].shape[0]
     incorrect = df[(df["lick"] == 1) & (df["reward"] == 0)].shape[0]
     incorrect_left = df[(df["left_spout"] == 1) & (df["reward"] == 0)].shape[0]
@@ -90,9 +89,8 @@ def main():
         'NA': "#F5F5F5"
     }
 
-    fig, axs = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
-    plt.subplots_adjust(hspace=0.8)
-
+    fig, axs = plt.subplots(2, 1, figsize=(10, 12))
+    
     # Add QW background
     for ax in axs:
         for i, qw in enumerate(qws):
@@ -102,14 +100,22 @@ def main():
     # Plot 1: Correct vs Incorrect
     axs[0].plot(x, corrects, '-o', label="Correct Trials", color='green')
     axs[0].plot(x, incorrects, '-o', label="Incorrect Trials", color='red')
-    axs[0].set_title("Correct and Incorrect Trials Across Days", pad=20)
+    axs[0].set_title("Correct, Incorrect Trials Across Days", pad=20)
     axs[0].set_ylabel("Count")
+    axs[0].set_xticks(x)
+    axs[0].set_xticklabels(day_labels)
     axs[0].spines['top'].set_visible(False)
     axs[0].spines['right'].set_visible(False)
     for i, box in enumerate(boxes):
-        y = max(corrects[i], incorrects[i]) + 4
+        y = max(corrects[i], incorrects[i]) + 4  # extra space
         axs[0].text(i, y, f"Box {box}", ha='center', fontsize=8)
-    axs[0].legend(frameon=False)
+
+    # Legend below plot 1
+    legend1_handles = axs[0].get_legend_handles_labels()[0] + [
+        Patch(facecolor=color, edgecolor='k', label=f"QW {qw}")
+        for qw, color in qw_colors.items() if qw != 'NA'
+    ]
+    axs[0].legend(handles=legend1_handles, frameon=False, loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=7)
 
     # Plot 2: Incorrect Left and Right
     axs[1].plot(x, inc_lefts, '-o', label="Incorrect Left", color='#D95F02')
@@ -121,19 +127,14 @@ def main():
     axs[1].spines['top'].set_visible(False)
     axs[1].spines['right'].set_visible(False)
     for i, box in enumerate(boxes):
-        y = max(inc_lefts[i], inc_rights[i]) + 4
+        y = max(inc_lefts[i], inc_rights[i]) + 4  # extra space
         axs[1].text(i, y, f"Box {box}", ha='center', fontsize=8)
-    axs[1].legend(frameon=False)
 
-    # QW Legend
-    qw_handles = [
-        Patch(facecolor=color, edgecolor='k', label=f"QW {qw}")
-        for qw, color in qw_colors.items() if qw != 'NA'
-    ]
-    axs[0].legend(handles=axs[0].get_legend_handles_labels()[0] + qw_handles, frameon=False)
+    # Legend below plot 2
+    axs[1].legend(frameon=False, loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=2)
 
-    plt.suptitle(f"Animal {args.animal} — Spout Sampling data across days", fontsize=14, fontweight='bold', y=0.97)
-    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.subplots_adjust(hspace=0.5)    
+    plt.suptitle(f"Animal {args.animal} — Spout Sampling data across days", fontsize=12, fontweight='bold', y=0.97)
 
     # Save outputs
     base_dir = Path(r"L:/dmclab/Joana/Behavior/Data") / args.animal / "Analysis" / "Across-days"
