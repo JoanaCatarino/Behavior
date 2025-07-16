@@ -71,7 +71,7 @@ def analyze_all_animals():
                 continue
             
             
-            uncomment when we finish scripts --> to not overwrite data and analyze all animals everytime
+            #uncomment when we finish scripts --> to not overwrite data and analyze all animals everytime
             # Check if already analyzed
             output_folder = DATA_DIR / animal_id / "Analysis" / "Across-days"
             output_plot = output_folder / f"{animal_id}_{protocol}_across_days.png"

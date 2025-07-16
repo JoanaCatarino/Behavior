@@ -11,8 +11,8 @@ import re
 from collections import defaultdict
 
 # Paths
-transfering_folder = r"Z:/dmclab/Joana/Behavior/Data/transfering"
-data_base_folder = r"Z:/dmclab/Joana/Behavior/Data"
+transfering_folder = r"L:/dmclab/Joana/Behavior/Data/transfering"
+data_base_folder = r"L:/dmclab/Joana/Behavior/Data"
 
 # Pattern to extract animal ID and date from the filename
 pattern = r"_([0-9]{6})_([0-9]{8})_"
