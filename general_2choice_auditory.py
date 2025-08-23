@@ -30,9 +30,9 @@ def load_tone_mapping(animal_id):
     mapping_file_path = Path(r"L:/dmclab/Joana/Behavior/Spout-tone map/spout_tone_generator.csv")
     spout_mapping_df = pd.read_csv(mapping_file_path)
     row = spout_mapping_df[spout_mapping_df["Animal"] == int(animal_id)].iloc[0]
-    pair_5khz = f"5KHz → {row['5KHz']} spout"
-    pair_10khz = f"10KHz → {row['10KHz']} spout"
-    return f"Tone-spout mapping: {pair_5khz}, {pair_10khz}"
+    pair_8khz = f"8KHz → {row['8KHz']} spout"
+    pair_16khz = f"16KHz → {row['16KHz']} spout"
+    return f"Tone-spout mapping: {pair_8khz}, {pair_16khz}"
 
 def load_trial_counts(file_path):
     
@@ -52,8 +52,8 @@ def load_trial_counts(file_path):
     incorrect_left = df[(df["left_spout"] == 1) & (df["punishment"] == 1)].shape[0]
     incorrect_right = df[(df["right_spout"] == 1) & (df["punishment"] == 1)].shape[0]
     early = df[df["early_lick"] == 1].shape[0] if "early_lick" in df.columns else 0
-    omission_5khz = df[(df["omission"] == 1) & (df["5KHz"] == 1)].shape[0]
-    omission_10khz = df[(df["omission"] == 1) & (df["10KHz"] == 1)].shape[0]
+    omission_8khz = df[(df["omission"] == 1) & (df["8KHz"] == 1)].shape[0]
+    omission_16khz = df[(df["omission"] == 1) & (df["16KHz"] == 1)].shape[0]
     dprime = df["d_prime"].iloc[0] if "d_prime" in df.columns else None
     hit_rate = df["hit_rate"].iloc[0] if "hit_rate" in df.columns else None
     false_alarm = df["false_alarm"].iloc[0] if "false_alarm" in df.columns else None
@@ -90,8 +90,8 @@ def load_trial_counts(file_path):
         incorrect_left=incorrect_left,
         incorrect_right=incorrect_right,
         early=early,
-        omission_5khz=omission_5khz,
-        omission_10khz=omission_10khz,
+        omission_8khz=omission_8khz,
+        omission_16khz=omission_16khz,
         d_prime=dprime,
         hit_rate=hr,
         false_alarm=fa,
@@ -187,8 +187,8 @@ def main():
 
 
     axs[1].plot(x, df['early'], '-o', label="Early Licks", color='orange')
-    axs[1].plot(x, df['omission_5khz'], '-o', label="Omission 5KHz", color='#91BAD6')
-    axs[1].plot(x, df['omission_10khz'], '-o', label="Omission 10KHz", color='#D69F7E')
+    axs[1].plot(x, df['omission_8khz'], '-o', label="Omission 8KHz", color='#91BAD6')
+    axs[1].plot(x, df['omission_16khz'], '-o', label="Omission 16KHz", color='#D69F7E')
     axs[1].set_title("Trial Outcomes - early licks and omissions")
     axs[1].set_ylabel("Count")
     axs[1].set_xticks(x)

@@ -20,6 +20,7 @@ protocol_to_script = {
     'SpoutSamp': 'analyze_spout_sampling.py',
     '2ChoiceAuditory': 'analyze_2choice_auditory.py',
     'AdaptSensorimotor': 'analyze_adapt_sensorimotor.py',
+    'FreePress': 'analyze_free_pressing.py'
     #'AdaptSensorimotor_distractor': 'analyze_adapt_sensorimotor_distractor.py'
 }
 
@@ -53,10 +54,11 @@ def analyze_new_data():
             print(f"📂 Files found: {[f.name for f in data_files]}")
 
             for file in data_files:
+              
                 match = filename_regex.match(file.stem)
                 if not match:
                     continue
-
+               
                 protocol_prefix = match.group('protocol')
                 animal = match.group('animal')
                 date = match.group('date')

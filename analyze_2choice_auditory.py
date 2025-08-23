@@ -28,9 +28,9 @@ def analyze(file_path, animal, date, box, output_dir):
     spout_mapping_df = pd.read_csv(mapping_file_path)
     animal_id = int(animal)
     mapping_row = spout_mapping_df[spout_mapping_df["Animal"] == animal_id].iloc[0]
-    pair_5khz = f"5KHz → {mapping_row['5KHz']} spout"
-    pair_10khz = f"10KHz → {mapping_row['10KHz']} spout"
-    mapping_subtitle = f"Tone-spout mapping: {pair_5khz}, {pair_10khz}"
+    pair_8khz = f"8KHz → {mapping_row['8KHz']} spout"
+    pair_16khz = f"16KHz → {mapping_row['16KHz']} spout"
+    mapping_subtitle = f"Tone-spout mapping: {pair_8khz}, {pair_16khz}"
 
     # Calculate lick latency
     df["tone_time"] = df["trial_start"] + 1.2
@@ -69,10 +69,10 @@ def analyze(file_path, animal, date, box, output_dir):
     max_trial = df_sorted["trial_number"].max()
 
     # Count data for bar plot
-    count_5khz = df[df["5KHz"] == 1].shape[0]
-    count_10khz = df[df["10KHz"] == 1].shape[0]
-    omission_5khz = df[(df["omission"] == 1) & (df["5KHz"] == 1)].shape[0]
-    omission_10khz = df[(df["omission"] == 1) & (df["10KHz"] == 1)].shape[0]
+    count_8khz = df[df["8KHz"] == 1].shape[0]
+    count_16khz = df[df["16KHz"] == 1].shape[0]
+    omission_8khz = df[(df["omission"] == 1) & (df["8KHz"] == 1)].shape[0]
+    omission_16khz = df[(df["omission"] == 1) & (df["16KHz"] == 1)].shape[0]
     total_early_licks = df[df["early_lick"] == 1].shape[0]
     count_left_correct = df[(df["left_spout"] == 1) & (df["reward"] == 1)].shape[0]
     count_left_incorrect = df[(df["left_spout"] == 1) & (df["punishment"] == 1)].shape[0]
@@ -80,16 +80,16 @@ def analyze(file_path, animal, date, box, output_dir):
     count_right_incorrect = df[(df["right_spout"] == 1) & (df["punishment"] == 1)].shape[0]
     
     bar_labels = [
-        "5KHz Trials", "10KHz Trials", 
-        "5KHz Omissions", "10KHz Omissions",
+        "8KHz Trials", "16KHz Trials", 
+        "8KHz Omissions", "16KHz Omissions",
         "Early Licks",
         "Left Correct", "Left Incorrect",
         "Right Correct", "Right Incorrect"
     ]
     
     bar_values = [
-        count_5khz, count_10khz, 
-        omission_5khz, omission_10khz,
+        count_8khz, count_16khz, 
+        omission_8khz, omission_16khz,
         total_early_licks,
         count_left_correct, count_left_incorrect,
         count_right_correct, count_right_incorrect
@@ -107,9 +107,9 @@ def analyze(file_path, animal, date, box, output_dir):
         trial = row["trial_number"]
         if row["autom_reward"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="purple", alpha=0.1)
-        elif row["5KHz"] == 1:
+        elif row["8KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#BFF9FF", alpha=0.2)
-        elif row["10KHz"] == 1:
+        elif row["16KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#F5A783", alpha=0.2)
     
     for category in categories:
@@ -125,8 +125,8 @@ def analyze(file_path, animal, date, box, output_dir):
     ax0.set_title("Trial Outcomes across session")
     ax0.set_xlim(min_trial - 1, max_trial + 1)
     ax0.legend(handles=[
-        Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="5KHz stim"),
-        Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="10KHz stim"),
+        Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="8KHz stim"),
+        Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="16KHz stim"),
         Patch(facecolor="purple", edgecolor="none", alpha=0.1, label="Auto reward")
     ], bbox_to_anchor=(1.02, 1), loc='upper left', fontsize='small')
 

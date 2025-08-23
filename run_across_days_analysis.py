@@ -9,6 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 from collections import defaultdict
+import pandas as pd
 
 # Base data directory
 DATA_DIR = Path(r"L:/dmclab/Joana/Behavior/Data")
@@ -27,6 +28,14 @@ filename_regex = re.compile(
     r'(?P<protocol>[^_]+)_(?P<animal>\d+)_(?P<date>\d{8})_\d+_box(?P<box>\w+)',
     re.IGNORECASE
 )
+
+
+def already_processed_dates(across_days_csv):
+    if across_days_csv.exists():
+        df = pd.read_csv(across_days_csv, dtype={"date": str})
+        return set(df["date"])
+    return set()
+
 
 def analyze_all_animals():
     for animal_dir in DATA_DIR.iterdir():
