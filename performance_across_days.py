@@ -54,19 +54,6 @@ def load_day_csvs(day_dir: str) -> tuple[pd.DataFrame, str | None]:
     dfs = [pd.read_csv(fp) for fp in files]
     return pd.concat(dfs, ignore_index=True), box_label
 
-'''
-def day_metrics(df: pd.DataFrame) -> dict | None:
-    """Compute percentages for one day. Return None if DF is empty."""
-    if df.empty:
-        return None
-    return {
-        "perc_correct":       (df["reward"] == 1).mean() * 100,
-        "perc_incorrect":     (df["punishment"] == 1).mean() * 100,
-        "perc_correct_left":  ((df["reward"] == 1) & (df["left_spout"]  == 1)).mean() * 100,
-        "perc_correct_right": ((df["reward"] == 1) & (df["right_spout"] == 1)).mean() * 100,
-    }
-'''
-
 
 def day_metrics(df: pd.DataFrame) -> dict | None:
     """Compute percentages for one day. Return None if DF is empty."""
