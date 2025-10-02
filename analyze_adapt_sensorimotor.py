@@ -18,7 +18,7 @@ def analyze(file_path, animal, date, box, output_dir):
     
     # Get info from file name 
     df = pd.read_csv(file_path).fillna(0)
-    protocol = "Two-choice Auditory task"
+    protocol = "Adaptive Sensorimotor Task"
     fig_title = f"{protocol} | Animal: {animal} | Date: {date} | Box {box}"
 
     # Extract tone-spout mapping for a specific animal
