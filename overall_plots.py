@@ -24,8 +24,8 @@ from scipy.stats import norm
 
 # ==== USER SETTINGS ==========================================
 base_dir = r"L:\dmclab\Joana\Behavior\Data"   
-animals_of_interest = ['956700']  
-animal = 956700               
+animals_of_interest = ['956699']  
+animal = 956699             
 recursive_search = True
 save_formats = ("png", "pdf", "svg")
 patterns = ["2ChoiceAuditory*.csv", "2ChoiceBlocks*.csv"]
@@ -189,6 +189,7 @@ def load_trial_counts(file_path:str) -> dir:
 
     return dict(
         total_trials = total_trials,
+        total_correct = correct,
         correct_8KHz = correct_8KHz,
         correct_16KHz = correct_16KHz,
         incorrect_8KHz = incorrect_8KHz,
@@ -945,6 +946,82 @@ def plot_across_days(animal: str, session_summaries: list[dict]) -> None:
         
         #plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_LickLatency_correct_incorrect_violin.png', dpi=500)
         #plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_LickLatency_correct_incorrect_violin.svg', dpi=500)
+        
+        # Figure 2B - Performance + Correct count (combo: bars + line, twin y-axes)
+        x = list(range(1, len(df) + 1))
+        line_perf = df["performance"].tolist()          # %
+        bar_correct = df["total_correct"].tolist()      # counts
+        day_labels = [f"{i}" for i in x]
+        
+        fig, ax_bar = plt.subplots(figsize=(20, 6), dpi=DPI)
+        
+        # Bars: total # correct (left y-axis)
+        bars = ax_bar.bar(x, bar_correct, width=0.6, label="Correct trials (count)", zorder=2, color="#D0EDEE")
+        ax_bar.set_ylabel("Correct trials (count)")
+        ax_bar.set_xlabel("Sessions")
+        ax_bar.set_xticks(x)
+        ax_bar.set_xticklabels(day_labels, rotation=0)
+        ax_bar.spines['top'].set_visible(False)
+        
+        # Line: performance % (right y-axis)
+        ax_line = ax_bar.twinx()
+        ax_line.plot(x, line_perf, linewidth=1, color='gray', zorder=3)
+        ax_line.scatter(x, line_perf, s=30, color="#876EA6", zorder=4, label="Performance (%)")
+        ax_line.set_ylim(0, 100)
+        ax_line.set_ylabel("Performance (%)")
+        ax_line.spines['top'].set_visible(False)
+        
+        # Simple legend: make proxy handles so both scales show up together
+        from matplotlib.lines import Line2D
+        proxy_line = Line2D([0], [0], color="#876EA6", marker='o', linewidth=1, label="Performance (%)")
+        proxy_bar  = Patch(facecolor=bars.patches[0].get_facecolor(), label="Correct trials (count)")
+        ax_bar.legend(handles=[proxy_bar, proxy_line], frameon=False, loc="upper center",
+                      bbox_to_anchor=(0.5, -0.12), ncol=2)
+        fig.subplots_adjust(bottom=0.18)
+        
+        ax_bar.set_title(f"Performance & Correct Trials per Session — Animal {animal}", pad=20)
+        plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_performance_correct.png', dpi=500)
+        plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_performance_correct.svg', dpi=500)
+        
+
+        # Figure 3B - %Correct + Correct count (combo: bars + line, twin y-axes)
+        x = list(range(1, len(df) + 1))
+        line_pcorr = df["percent_correct"].tolist()     # %
+        bar_correct = df["total_correct"].tolist()      # counts
+        day_labels = [f"{i}" for i in x]
+        
+        fig, ax_bar = plt.subplots(figsize=(20, 6), dpi=DPI)
+        
+        # Bars: total # correct (left y-axis)
+        bars = ax_bar.bar(x, bar_correct, width=0.6, label="Correct trials (count)", zorder=2, color="#E3C7E9")
+        ax_bar.set_ylabel("Correct trials (count)")
+        ax_bar.set_xlabel("Sessions")
+        ax_bar.set_xticks(x)
+        ax_bar.set_xticklabels(day_labels, rotation=0)
+        ax_bar.spines['top'].set_visible(False)
+        
+        # Line: % correct (right y-axis)
+        ax_line = ax_bar.twinx()
+        ax_line.plot(x, line_pcorr, linewidth=1, color='gray', zorder=3)
+        ax_line.scatter(x, line_pcorr, s=30, color="#876EA6", zorder=4, label="% Correct")
+        ax_line.set_ylim(0, 100)
+        ax_line.set_ylabel("% Correct")
+        ax_line.spines['top'].set_visible(False)
+        
+        # Legend (shared)
+        from matplotlib.lines import Line2D
+        proxy_line = Line2D([0], [0], color="#876EA6", marker='o', linewidth=1, label="% Correct")
+        proxy_bar  = Patch(facecolor=bars.patches[0].get_facecolor(), label="Correct trials (count)")
+        ax_bar.legend(handles=[proxy_bar, proxy_line], frameon=False, loc="upper center",
+                      bbox_to_anchor=(0.5, -0.12), ncol=2)
+        fig.subplots_adjust(bottom=0.18)
+        
+        ax_bar.set_title(f"Performance & Correct Trials per Session — Animal {animal}", pad=20)
+        plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_%correct_correct.png', dpi=500)
+        plt.savefig(f'L:/dmclab/Joana/Behavior/Data/{animal}/Analysis/Overall_Analysis/{animal}_%correct_correct.svg', dpi=500)
+        
+
+        
         
 
 def run_for_animals(animal_ids: list[str]) -> None:

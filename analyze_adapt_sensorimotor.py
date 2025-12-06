@@ -26,13 +26,16 @@ def analyze(file_path, animal, date, box, output_dir):
     spout_mapping_df = pd.read_csv(mapping_file_path)
     animal_id = int(animal)
     mapping_row = spout_mapping_df[spout_mapping_df["Animal"] == animal_id].iloc[0]
-    pair_5khz = f"5KHz → {mapping_row['5KHz']} spout"
-    pair_10khz = f"10KHz → {mapping_row['10KHz']} spout"
-    mapping_subtitle = f"Tone-spout mapping: {pair_5khz}, {pair_10khz}"
+    pair_8khz = f"5KHz → {mapping_row['8KHz']} spout"
+    pair_16khz = f"16KHz → {mapping_row['16KHz']} spout"
+    mapping_subtitle = f"Tone-spout mapping: {pair_8khz}, {pair_16khz}"
 
     # Calculate lick latency
-    df["tone_time"] = df["trial_start"] + 1.2
-    df["lick_latency"] = df["lick_time"] - df["tone_time"]
+    df["lick_latency"] = np.where(
+    df["lick"] == 1,
+    df["lick_time"] - df["RW_start"],
+    np.nan
+    )
     df["autom_reward"] = df["autom_reward"].fillna(0)
 
     # Block color mapping
@@ -82,9 +85,9 @@ def analyze(file_path, animal, date, box, output_dir):
         trial = row["trial_number"]
         if row["catch_trial"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#EBE89E", alpha=0.4)
-        elif row["5KHz"] == 1:
+        elif row["8KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#BFF9FF", alpha=0.2)
-        elif row["10KHz"] == 1:
+        elif row["16KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#F5A783", alpha=0.2)
 
     for category in categories:
@@ -107,16 +110,17 @@ def analyze(file_path, animal, date, box, output_dir):
 
     ax0.legend(handles=[
         Patch(facecolor="#EBE89E", edgecolor="none", alpha=0.4, label="Catch Trial"),
-        Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="5KHz stim"),
-        Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="10KHz stim"),
+        Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="8KHz stim"),
+        Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="16KHz stim"),
         Patch(facecolor="#DD6E42", label="Sound Block"),
         Patch(facecolor="#7F557D", label="Action L Block"),
         Patch(facecolor="#4EA5D9", label="Action R Block")
     ], bbox_to_anchor=(0.5, -0.35), loc='upper center', fontsize='small', ncol=6, frameon=False)
 
     # Row 2: Lick Latencies
-    left_licks = df[(df["left_spout"] == 1) & df["lick_latency"].notna()]
-    right_licks = df[(df["right_spout"] == 1) & df["lick_latency"].notna()]
+    valid_licks = df[df["lick"] == 1]
+    left_licks = valid_licks[valid_licks["left_spout"] == 1]
+    right_licks = valid_licks[valid_licks["right_spout"] == 1]
     left_colors = left_licks["reward"].map({1: "green", 0: "red"})
     right_colors = right_licks["reward"].map({1: "green", 0: "red"})
 
@@ -140,10 +144,10 @@ def analyze(file_path, animal, date, box, output_dir):
 
     # Row 3: Detailed Trial Counts
     trial_counts = [
-        df[df["5KHz"] == 1].shape[0],
-        df[df["10KHz"] == 1].shape[0],
-        df[(df["omission"] == 1) & (df["5KHz"] == 1)].shape[0],
-        df[(df["omission"] == 1) & (df["10KHz"] == 1)].shape[0],
+        df[df["8KHz"] == 1].shape[0],
+        df[df["16KHz"] == 1].shape[0],
+        df[(df["omission"] == 1) & (df["8KHz"] == 1)].shape[0],
+        df[(df["omission"] == 1) & (df["16KHz"] == 1)].shape[0],
         df[df["early_lick"] == 1].shape[0],
         df[(df["left_spout"] == 1) & (df["reward"] == 1)].shape[0],
         df[(df["left_spout"] == 1) & (df["punishment"] == 1)].shape[0],
@@ -154,7 +158,7 @@ def analyze(file_path, animal, date, box, output_dir):
         block_counts.get("action-right", 0)
     ]
     trial_labels = [
-        "5KHz Trials", "10KHz Trials", "5KHz Omissions", "10KHz Omissions",
+        "8KHz Trials", "16KHz Trials", "8KHz Omissions", "16KHz Omissions",
         "Early Licks", "Left Correct", "Left Incorrect", "Right Correct", "Right Incorrect",
         "Sound Blocks", "Action L Blocks", "Action R Blocks"
     ]
@@ -229,7 +233,8 @@ def analyze(file_path, animal, date, box, output_dir):
     plt.figtext(0.5, 0.95, mapping_subtitle, ha='center', fontsize=12)
 
     # Save
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     base_filename = Path(file_path).stem
     for ext in ['png', 'pdf', 'svg']:
         fig.savefig(Path(output_dir) / f"{base_filename}_summary.{ext}", dpi=400)
@@ -253,9 +258,9 @@ def analyze(file_path, animal, date, box, output_dir):
             trial = row["trial_number"]
             if row["catch_trial"] == 1:
                 ax1.axvspan(trial - 0.5, trial + 0.5, color="#EBE89E", alpha=0.4)
-            elif row["5KHz"] == 1:
+            elif row["8KHz"] == 1:
                 ax1.axvspan(trial - 0.5, trial + 0.5, color="#BFF9FF", alpha=0.2)
-            elif row["10KHz"] == 1:
+            elif row["16KHz"] == 1:
                 ax1.axvspan(trial - 0.5, trial + 0.5, color="#F5A783", alpha=0.2)
         for category in categories:
             subset = df_block_plot[df_block_plot["category"] == category]
@@ -271,18 +276,18 @@ def analyze(file_path, animal, date, box, output_dir):
         
         ax1.legend(handles=[
             Patch(facecolor="#EBE89E", edgecolor="none", alpha=0.4, label="Catch Trial"),
-            Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="5KHz stim"),
-            Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="10KHz stim"),
+            Patch(facecolor="#BFF9FF", edgecolor="none", alpha=0.2, label="8KHz stim"),
+            Patch(facecolor="#F5A783", edgecolor="none", alpha=0.2, label="16KHz stim"),
         ], bbox_to_anchor=(0.5, -0.35), loc='upper center', fontsize='small', ncol=3, frameon=False)
 
         ax2 = fig2.add_subplot(gs2[i * 2 + 1])
-        bar_labels = ["5KHz", "10KHz", "5KHz Om", "10KHz Om", "Early Lick",
+        bar_labels = ["8KHz", "16KHz", "8KHz Om", "16KHz Om", "Early Lick",
                       "Left Correct", "Left Incorrect", "Right Correct", "Right Incorrect"]
         bar_values = [
-            df_block[df_block["5KHz"] == 1].shape[0],
-            df_block[df_block["10KHz"] == 1].shape[0],
-            df_block[(df_block["omission"] == 1) & (df_block["5KHz"] == 1)].shape[0],
-            df_block[(df_block["omission"] == 1) & (df_block["10KHz"] == 1)].shape[0],
+            df_block[df_block["8KHz"] == 1].shape[0],
+            df_block[df_block["16KHz"] == 1].shape[0],
+            df_block[(df_block["omission"] == 1) & (df_block["8KHz"] == 1)].shape[0],
+            df_block[(df_block["omission"] == 1) & (df_block["16KHz"] == 1)].shape[0],
             df_block[df_block["early_lick"] == 1].shape[0],
             df_block[(df_block["left_spout"] == 1) & (df_block["reward"] == 1)].shape[0],
             df_block[(df_block["left_spout"] == 1) & (df_block["punishment"] == 1)].shape[0],
@@ -301,11 +306,15 @@ def analyze(file_path, animal, date, box, output_dir):
         ax2.spines['right'].set_visible(False)
 
         
-        fig2.suptitle(fig_title, fontsize=14, y=0.98)
-        plt.figtext(0.5, 0.95, mapping_subtitle, ha='center', fontsize=12)
+    fig2.suptitle(fig_title, fontsize=14, y=0.98)
+    plt.figtext(0.5, 0.95, mapping_subtitle, ha='center', fontsize=12)
 
+    # Save
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base_filename = Path(file_path).stem
     for ext in ['png', 'pdf', 'svg']:
-        fig2.savefig(Path(output_dir) / f"{base_filename}_summary_blocks.{ext}", dpi=400)
+        fig2.savefig(Path(output_dir) / f"{base_filename}_summary_per_block.{ext}", dpi=400)
 
     print("DONE!")
 

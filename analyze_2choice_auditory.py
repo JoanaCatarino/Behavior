@@ -20,7 +20,7 @@ def analyze(file_path, animal, date, box, output_dir):
    
     # Get info from file name 
     df = pd.read_csv(file_path).fillna(0)
-    protocol = "Two-choice Auditory task"
+    protocol = "Two-choice Auditory task Blocks"
     fig_title = f"{protocol} | Animal: {animal} | Date: {date} | Box {box}"
 
     # Extract tone-spout mapping for a specific animal
@@ -33,11 +33,13 @@ def analyze(file_path, animal, date, box, output_dir):
     mapping_subtitle = f"Tone-spout mapping: {pair_8khz}, {pair_16khz}"
 
     # Calculate lick latency
-    df["tone_time"] = df["trial_start"] + 1.2
-    df["lick_latency"] = df["lick_time"] - df["tone_time"]
+    df["lick_latency"] = np.where(df["lick"] == 1,
+                              df["lick_time"] - df["RW_start"],
+                              np.nan)
 
     # Define the different variables to plot    
-    valid_licks = df[df["lick_latency"].notna()]
+    valid_licks = df[(df["lick"] == 1) & df["lick_latency"].notna()]
+
     left_licks = valid_licks[valid_licks["left_spout"] == 1]
     right_licks = valid_licks[valid_licks["right_spout"] == 1]
     left_colors = left_licks["reward"].map({1: "green", 0: "red"}) 
@@ -54,13 +56,20 @@ def analyze(file_path, animal, date, box, output_dir):
         "incorrect left": "red", "incorrect right": "red",
     }
 
+    
+    
     df["category"] = None
+
     df.loc[df["early_lick"] == 1, "category"] = "early lick"
+
     df.loc[(df["omission"] == 1) & (df["category"].isna()), "category"] = "omission"
+
     df.loc[(df["left_spout"] == 1) & (df["reward"] == 1), "category"] = "correct left"
     df.loc[(df["right_spout"] == 1) & (df["reward"] == 1), "category"] = "correct right"
-    df.loc[(df["punishment"] == 1) & (df["left_spout"] == 1), "category"] = "incorrect left"
-    df.loc[(df["punishment"] == 1) & (df["right_spout"] == 1), "category"] = "incorrect right"
+
+    df.loc[(df["left_spout"] == 1) & (df["punishment"] == 1), "category"] = "incorrect left"
+    df.loc[(df["right_spout"] == 1) & (df["punishment"] == 1), "category"] = "incorrect right"
+    
 
     df_plot = df[df["category"].notna()]
     df_sorted = df_plot.sort_values("trial_number")
@@ -198,21 +207,23 @@ def analyze(file_path, animal, date, box, output_dir):
 
     ax5 = fig.add_subplot(gs[3, 1])
     
-    num_total_trials = len(df_plot)
+    num_total_trials = len(df_plot) # Change this to only include omission, correct, incorrect
+    num_omissions = (df_plot["omission"] == 1).sum()
     num_correct = (df_plot["reward"] == 1).sum()
     num_incorrect = (df_plot["punishment"] == 1).sum()
     correct_left = ((df_plot["reward"] == 1) & (df_plot["left_spout"] == 1)).sum()
     correct_right = ((df_plot["reward"] == 1) & (df_plot["right_spout"] == 1)).sum()
     
-    bar_labels_pct = ['Correct', 'Incorrect', 'Correct Left', 'Correct Right']
+    bar_labels_pct = ['%Correct', '%Incorrect', '%Correct Left', '%Correct Right', 'Performance']
     bar_values_pct = [
-    num_correct / num_total_trials * 100,
-    num_incorrect / num_total_trials * 100,
-    correct_left / num_total_trials * 100,
-    correct_right / num_total_trials * 100
+    (num_correct / (num_correct + num_incorrect)) * 100,
+    (num_incorrect / (num_correct + num_incorrect)) * 100,
+    (correct_left / (num_correct + num_incorrect)) * 100,
+    (correct_right / (num_correct + num_incorrect)) * 100,
+    (num_correct/(num_correct + num_incorrect + num_omissions))*100
     ]
     
-    bars = ax5.bar(bar_labels_pct, bar_values_pct, color=['green', 'red', 'green', 'green'])
+    bars = ax5.bar(bar_labels_pct, bar_values_pct, color=['green', 'red', 'green', 'green', 'gray'])
     for bar in bars:
         yval = bar.get_height()
         ax5.text(bar.get_x() + bar.get_width() / 2, yval + 1, f'{yval:.1f}%', ha='center')

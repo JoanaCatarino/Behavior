@@ -20,7 +20,7 @@ def is_digit_folder(name):
 
 # Extract timestamp from filename
 def extract_timestamp(filename):
-    match = re.search(r'2ChoiceAuditory_\d+_(\d{8}_\d{6})_box', filename)
+    match = re.search(r'2ChoiceBlocks_\d+_(\d{8}_\d{6})_box', filename)
     if match:
         return datetime.strptime(match.group(1), "%Y%m%d_%H%M%S")
     return None
@@ -40,43 +40,56 @@ for subject_folder in os.listdir(base_dir):
             continue
 
         # Get all 2ChoiceAuditory CSV files
-        files = [f for f in os.listdir(date_path) if f.startswith("2ChoiceAuditory") and f.endswith(".csv")]
+        files = [f for f in os.listdir(date_path) if f.startswith("2ChoiceBlocks") and f.endswith(".csv")]
 
         # Extract timestamps and sort
         files_with_time = [(f, extract_timestamp(f)) for f in files if extract_timestamp(f)]
-        if len(files_with_time) != 2:
+        if len(files_with_time) < 2:
             print(f"⚠️ Skipping {date_path} — found {len(files_with_time)} valid 2ChoiceAuditory files.")
             continue
 
-        files_with_time.sort(key=lambda x: x[1])  # oldest first
-        (older_file, _), (newer_file, _) = files_with_time
+        # Sort oldest → newest
+        files_with_time.sort(key=lambda x: x[1])
+        sorted_files = [f[0] for f in files_with_time]
 
-        path_old = os.path.join(date_path, older_file)
-        path_new = os.path.join(date_path, newer_file)
+        # Track concatenated dataframe
+        concatenated = None
+        trial_offset = 0
 
         try:
-            df_old = pd.read_csv(path_old)
-            df_new = pd.read_csv(path_new)
+            for i, filename in enumerate(sorted_files):
+                path = os.path.join(date_path, filename)
+                df = pd.read_csv(path)
 
-            # Update trial numbers in the newer file
-            max_trial_old = df_old["trial_number"].max()
-            df_new["trial_number"] += max_trial_old
+                # Apply trial offset except for first file
+                df["trial_number"] += trial_offset
 
-            # Concatenate
-            df_concat = pd.concat([df_old, df_new], ignore_index=True)
+                # Update offset for next file
+                trial_offset += df["trial_number"].max()
 
-            # Move original files to old/ subfolder
+                # Concatenate
+                if concatenated is None:
+                    concatenated = df
+                else:
+                    concatenated = pd.concat([concatenated, df], ignore_index=True)
+
+            # Move original files into old/
             old_folder = os.path.join(date_path, "old")
             os.makedirs(old_folder, exist_ok=True)
 
-            shutil.move(path_old, os.path.join(old_folder, older_file.replace(".csv", "_old.csv")))
-            shutil.move(path_new, os.path.join(old_folder, newer_file.replace(".csv", "_old.csv")))
+            for filename in sorted_files:
+                shutil.move(
+                    os.path.join(date_path, filename),
+                    os.path.join(old_folder, filename.replace(".csv", "_old.csv"))
+                )
 
-            # Save combined file using the older file's name
-            final_path = os.path.join(date_path, older_file)
-            df_concat.to_csv(final_path, index=False)
+            # Save using the name of the oldest file
+            final_filename = sorted_files[0]
+            final_path = os.path.join(date_path, final_filename)
 
-            print(f"✅ Concatenated and saved: {final_path}")
+            concatenated.to_csv(final_path, index=False)
+
+            print(f"✅ Concatenated {len(sorted_files)} files → {final_path}")
 
         except Exception as e:
             print(f"❌ Error processing {date_path}: {e}")
