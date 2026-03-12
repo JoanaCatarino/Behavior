@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 
 # Base directory path
-base_dir = r"L:\dmclab\Joana\Behavior\Data"
+base_dir = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/Cohort_2"
 
 # Check if folder name is only digits
 def is_digit_folder(name):
@@ -45,7 +45,7 @@ for subject_folder in os.listdir(base_dir):
         # Extract timestamps and sort
         files_with_time = [(f, extract_timestamp(f)) for f in files if extract_timestamp(f)]
         if len(files_with_time) < 2:
-            print(f"⚠️ Skipping {date_path} — found {len(files_with_time)} valid 2ChoiceAuditory files.")
+            print(f"⚠️ Skipping {date_path} — found {len(files_with_time)} valid 2ChoiceAuditory Blocks files.")
             continue
 
         # Sort oldest → newest

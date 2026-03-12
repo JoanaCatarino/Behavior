@@ -24,7 +24,7 @@ def analyze(file_path, animal, date, box, output_dir):
     fig_title = f"{protocol} | Animal: {animal} | Date: {date} | Box {box}"
 
     # Extract tone-spout mapping for a specific animal
-    mapping_file_path = Path(r"L:/dmclab/Joana/Behavior/Spout-tone map/spout_tone_generator.csv")
+    mapping_file_path = Path(r"L:/dmclab/Joana/PFC-Str_behavior_project/Spout-tone map/spout_tone_generator.csv")
     spout_mapping_df = pd.read_csv(mapping_file_path)
     animal_id = int(animal)
     mapping_row = spout_mapping_df[spout_mapping_df["Animal"] == animal_id].iloc[0]
@@ -73,7 +73,6 @@ def analyze(file_path, animal, date, box, output_dir):
 
     df_plot = df[df["category"].notna()]
     df_sorted = df_plot.sort_values("trial_number")
-    df_sorted["autom_reward"] = df_sorted["autom_reward"].astype(int) 
     min_trial = df_sorted["trial_number"].min()
     max_trial = df_sorted["trial_number"].max()
 
@@ -114,15 +113,13 @@ def analyze(file_path, animal, date, box, output_dir):
     ax0 = fig.add_subplot(gs[0, :])
     for _, row in df.iterrows():
         trial = row["trial_number"]
-        if row["autom_reward"] == 1:
-            ax0.axvspan(trial - 0.5, trial + 0.5, color="purple", alpha=0.1)
-        elif row["8KHz"] == 1:
+        if row["8KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#BFF9FF", alpha=0.2)
         elif row["16KHz"] == 1:
             ax0.axvspan(trial - 0.5, trial + 0.5, color="#F5A783", alpha=0.2)
     
     for category in categories:
-        subset = df_sorted[(df_sorted["category"] == category) & (df_sorted["autom_reward"] != 1)]
+        subset = df_sorted[(df_sorted["category"] == category)]
         
         ax0.scatter(subset["trial_number"], [category_to_y[category]] * len(subset),
                     color=category_colors[category], s=10, zorder=3)

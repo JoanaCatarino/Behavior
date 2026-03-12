@@ -27,7 +27,7 @@ def extract_metadata(file_path):
 
 
 def load_tone_mapping(animal_id):
-    mapping_file_path = Path(r"L:/dmclab/Joana/Behavior/Spout-tone map/spout_tone_generator.csv")
+    mapping_file_path = Path(r"L:/dmclab/Joana/PFC-Str_behavior_project/Spout-tone map/spout_tone_generator.csv")
     spout_mapping_df = pd.read_csv(mapping_file_path)
     row = spout_mapping_df[spout_mapping_df["Animal"] == int(animal_id)].iloc[0]
     pair_8khz = f"8KHz → {row['8KHz']} spout"

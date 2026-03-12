@@ -12,14 +12,14 @@ from collections import defaultdict
 import pandas as pd
 
 # Base data directory
-DATA_DIR = Path(r"L:/dmclab/Joana/Behavior/Data")
+DATA_DIR = Path(r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/Cohort_1")
 
 # Map protocol prefix to script
 protocol_to_script = {
     'FreeLick': 'general_free_licking.py',
-    'SpoutSamp': 'general_spout_sampling.py',
+    #'2ChoiceBlocks': 'general_2choice_auditory_blocks.py',
     '2ChoiceAuditory': 'general_2choice_auditory.py',
-    #'AdaptSensorimotor': 'general_adapt_sensorimotor.py',
+    'AdaptSensorimotor': 'general_adapt_sensorimotor.py',
     # 'AdaptSensorimotor_distractor': 'analyze_adapt_sensorimotor_distractor.py'
 }
 

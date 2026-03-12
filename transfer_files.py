@@ -11,11 +11,11 @@ import re
 from collections import defaultdict
 
 # Paths
-transfering_folder = r"L:/dmclab/Joana/Behavior/Data/transfering"
-data_base_folder = r"L:/dmclab/Joana/Behavior/Data"
+transfering_folder = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/transfering"
+data_base_folder = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/Cohort_2"
 
 # Pattern to extract animal ID and date from the filename
-pattern = r"_([0-9]{6})_([0-9]{8})_"
+pattern = r"_([0-9]{7})_([0-9]{8})_"
 
 # Gather files grouped by base name (excluding extension)
 file_groups = defaultdict(list)
