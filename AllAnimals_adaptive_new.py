@@ -576,7 +576,7 @@ def plot_performance_per_session(perf_df, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.pdf", bbox_inches="tight")
 
 
 # ============================================================
@@ -678,7 +678,7 @@ def plot_performance_per_blocktype(perf_block_df, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.pdf", bbox_inches="tight")
     
     
 #%% trials until switch 
@@ -868,7 +868,7 @@ def plot_trials_until_switch_blocktype(session_means_df, overall_stats_df, outdi
     plt.tight_layout()
     # plt.savefig(outdir / f"Triangle_TrialsUntilSwitch_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Triangle_TrialsUntilSwitch_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Triangle_TrialsUntilSwitch_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Triangle_TrialsUntilSwitch_{stage}.pdf", bbox_inches="tight")
 
 #%% Perseverative errors
 
@@ -1129,7 +1129,7 @@ def plot_pe_triangle(pe_df, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_PE_TrianglePlot_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_PE_TrianglePlot_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_PE_TrianglePlot_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_PE_TrianglePlot_{stage}.pdf", bbox_inches="tight")
 
 #%%
 
@@ -1323,7 +1323,7 @@ def plot_pe_timecourse(session_timecourse_df, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.pdf", bbox_inches="tight")
 
 
 #%%
@@ -1607,7 +1607,7 @@ def plot_latency_panels_by_stage(lat_df, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Latency_4Panels_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Latency_4Panels_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Latency_4Panels_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Latency_4Panels_{stage}.pdf", bbox_inches="tight")
 
 
 # ============================================================
@@ -1978,7 +1978,7 @@ def plot_latency_timecourse(session_latency_timecourse_df, outdir, strain_colors
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_Latency_TimeCourse_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_Latency_TimeCourse_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_Latency_TimeCourse_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_Latency_TimeCourse_{stage}.pdf", bbox_inches="tight")
 
 #%%
 
@@ -2068,7 +2068,7 @@ def plot_omissions_blocktype(df_omissions, outdir, strain_colors, stage):
             row["n_omissions"],
             marker="^",
             s=130,
-            facecolors="none",
+            facecolors=color,
             edgecolors=color,
             linewidths=1.8,
         )
@@ -2097,7 +2097,7 @@ def plot_omissions_blocktype(df_omissions, outdir, strain_colors, stage):
     # Formatting
     # ----------------------------------------------------
     ax.set_xlim(-0.6, mean_x[-1] + 0.1)
-    ax.set_ylim(0, 90)
+    ax.set_ylim(0, 200)
     ax.set_xticks(label_x)
     ax.set_xticklabels(
         ["Sound", "Action-R", "Action-L"],
@@ -2124,7 +2124,7 @@ def plot_omissions_blocktype(df_omissions, outdir, strain_colors, stage):
             marker="^",
             linestyle="",
             markersize=9,
-            markerfacecolor="none",
+            markerfacecolor=color,
             markeredgewidth=1.8,
             markeredgecolor=color,
             color=color,
@@ -2150,10 +2150,986 @@ def plot_omissions_blocktype(df_omissions, outdir, strain_colors, stage):
     plt.tight_layout()
     # plt.savefig(outdir / f"Adaptive_Omissions_BlockType_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"Adaptive_Omissions_BlockType_{stage}.svg", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_Omissions_BlockType_{stage}.pdf", bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_Omissions_BlockType_{stage}.pdf", bbox_inches="tight")
 
 
 
+#%% Percencorrect and percentcorrect per block
+
+# ============================================================
+# PERFORMANCE TABLES
+# ============================================================
+
+def compute_percentcorrect_tables(sessions_df):
+    print("\n=== Computing performance tables ===")
+
+    percentcorrect_records = []
+    percentcorrect_block_records = []
+
+    block_types = ["sound", "action-right", "action-left"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+        except Exception as e:
+            print(f"⚠ Could not read {row['filename']}: {e}")
+            continue
+
+        # ----------------------------
+        # PERCENT CORRECT PER SESSION
+        # ----------------------------
+        needed_session = ["reward", "punishment"]
+        if all(c in df.columns for c in needed_session):
+            n_correct = (df["reward"] == 1).sum()
+            n_incorrect = (df["punishment"] == 1).sum()
+            
+            denom = n_correct + n_incorrect
+            percentcorrect = (n_correct / denom * 100) if denom > 0 else np.nan
+
+            percentcorrect_records.append({
+                "animal": row["animal"],
+                "session_date": row["session_date"],
+                "session_id": f"{row['animal']}_{row['session_date']}",
+                "strain": row["strain"],
+                "stage": row["stage"],
+                "correct": n_correct,
+                "incorrect": n_incorrect,
+                "percentcorrect": percentcorrect,
+            })
+        else:
+            print(f"⚠ Missing columns for session percentcorrect in {row['filename']}")
+
+        # ----------------------------
+        # PERFORMANCE PER BLOCK TYPE
+        # ----------------------------
+        needed_block = ["block", "reward", "punishment"]
+        if all(c in df.columns for c in needed_block):
+            for blk in block_types:
+                df_blk = df[df["block"] == blk]
+
+                if df_blk.empty:
+                    continue
+
+                n_correct = (df_blk["reward"] == 1).sum()
+                n_incorrect = (df_blk["punishment"] == 1).sum()
+
+                denom = n_correct + n_incorrect
+                percentcorrect_blocks = (n_correct / denom * 100) if denom > 0 else np.nan
+
+                percentcorrect_block_records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "block_type": blk,
+                    "percentcorrect": percentcorrect_blocks,
+                })
+        else:
+            print(f"⚠ Missing columns for block performance in {row['filename']}")
+
+    percentcorrect_df = pd.DataFrame(percentcorrect_records)
+    percentcorrect_block_df = pd.DataFrame(percentcorrect_block_records)
+
+    print("\n=== percentcorrect TABLE ===")
+    print(percentcorrect_df.head())
+
+    print("\n=== percentcorrect PER BLOCK TYPE ===")
+    print(percentcorrect_block_df.head())
+
+    return percentcorrect_df, percentcorrect_block_df
+
+
+# ============================================================
+# percentcorrect PER SESSION
+# ============================================================
+
+def plot_percentcorrect_per_session(percentcorrect_df, outdir, strain_colors, stage):
+    df_stage = percentcorrect_df[percentcorrect_df["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No percentcorrect data for stage: {stage}")
+        return
+
+    rng = np.random.default_rng(42)
+
+    fig, ax = plt.subplots(figsize=(7, 5), dpi=plot_config["dpi"])
+
+    data_x = 0.9
+    mean_x = 1.1
+
+    for _, row in df_stage.iterrows():
+        jitter = (rng.random() - 0.5) * 0.15
+        color = strain_colors.get(row["strain"], "gray")
+
+        ax.scatter(
+            data_x + jitter,
+            row["percentcorrect"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8,
+        )
+
+    ax.errorbar(
+        mean_x,
+        df_stage["percentcorrect"].mean(),
+        yerr=df_stage["percentcorrect"].sem(),
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2,
+    )
+
+    ax.axhline(50, linestyle="--", color="black", alpha=0.6)
+
+    ax.set_xlim(0.75, 1.2)
+    ax.set_ylim(0, 100)
+    ax.set_xticks([])
+    ax.tick_params(labelsize=plot_config["tick_fontsize"])
+    ax.set_ylabel(
+        "percentcorrect (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+    ax.set_title(
+        f"percentcorrect per Session — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        plt.Line2D(
+            [0], [0],
+            marker="^",
+            linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    plt.tight_layout()
+    # plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"Adaptive_PerformancePerSession_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_percentcorrectPerSession_{stage}.pdf", bbox_inches="tight")
+
+
+# ============================================================
+# PERFORMANCE PER BLOCK TYPE
+# ============================================================
+
+def plot_percentcorrect_per_blocktype(percentcorrect_block_df, outdir, strain_colors, stage):
+    df_stage = percentcorrect_block_df[percentcorrect_block_df["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No block percentcorrect data for stage: {stage}")
+        return
+
+    rng = np.random.default_rng(42)
+
+    fig, ax = plt.subplots(figsize=(9, 6), dpi=plot_config["dpi"])
+
+    block_order = ["sound", "action-right", "action-left"]
+
+    spacing = 2
+    data_x = np.arange(len(block_order)) * spacing
+    mean_x = data_x + 0.6
+    label_x = (data_x + mean_x) / 2
+
+    block_positions = dict(zip(block_order, data_x))
+
+    for _, row in df_stage.iterrows():
+        jitter = (rng.random() - 0.5) * 0.15
+        color = strain_colors.get(row["strain"], "gray")
+
+        ax.scatter(
+            block_positions[row["block_type"]] + jitter,
+            row["percentcorrect"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8,
+        )
+
+    stats = (
+        df_stage.groupby("block_type")["percentcorrect"]
+        .agg(["mean", "sem"])
+        .reindex(block_order)
+    )
+
+    ax.errorbar(
+        mean_x,
+        stats["mean"].values,
+        yerr=stats["sem"].values,
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2,
+    )
+
+    ax.axhline(50, linestyle="--", color="gray", alpha=0.5)
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+
+    ax.set_ylim(0, 100)
+    ax.set_xlim(-0.6, mean_x[-1] + 0.1)
+    ax.set_xticks(label_x)
+    ax.set_xticklabels(
+        ["Sound", "Action-R", "Action-L"],
+        fontsize=plot_config["label_fontsize"]
+    )
+    ax.tick_params(labelsize=plot_config["tick_fontsize"])
+    ax.set_ylabel(
+        "percentcorrect (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+    ax.set_title(
+        f"percentcorrect per Block Type — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        plt.Line2D(
+            [0], [0],
+            marker="^",
+            linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    plt.tight_layout()
+    # plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"Adaptive_Performance_BlockTypes_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_percentcorrect_BlockTypes_{stage}.pdf", bbox_inches="tight")
+    
+    
+# ============================================================
+# BLOCKS PER 100 TRIALS
+# ============================================================
+
+def compute_blocks_per_100_table(metrics_df):
+    df = metrics_df.copy()
+
+    if df.empty:
+        print("⚠ metrics_df is empty")
+        return pd.DataFrame()
+
+    df["blocks_per_100_trials"] = (df["n_blocks"] / df["total_trials"]) * 100
+
+    out = df[
+        ["animal", "session_date", "strain", "stage",
+         "n_blocks", "total_trials", "blocks_per_100_trials"]
+    ].copy()
+
+    print("\n=== BLOCKS PER 100 TRIALS ===")
+    print(out.head())
+
+    return out
+
+
+def plot_blocks_per_100(df_blocks100, outdir, strain_colors, stage):
+    df_stage = df_blocks100[df_blocks100["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No blocks/100 data for stage: {stage}")
+        return
+
+    rng = np.random.default_rng(42)
+
+    fig, ax = plt.subplots(figsize=(7, 5), dpi=plot_config["dpi"])
+
+    data_x = 0.9
+    mean_x = 1.1
+
+    for _, row in df_stage.iterrows():
+        jitter = (rng.random() - 0.5) * 0.15
+        color = strain_colors.get(row["strain"], "gray")
+
+        ax.scatter(
+            data_x + jitter,
+            row["blocks_per_100_trials"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8
+        )
+
+    ax.errorbar(
+        mean_x,
+        df_stage["blocks_per_100_trials"].mean(),
+        yerr=df_stage["blocks_per_100_trials"].sem(),
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2
+    )
+
+    ax.set_xlim(0.75, 1.2)
+    ax.set_xticks([])
+    ax.tick_params(labelsize=plot_config["tick_fontsize"])
+    ax.set_ylabel(
+        "Blocks per 100 trials",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+    ax.set_title(
+        f"Blocks per 100 Trials — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    plt.tight_layout()
+    # plt.savefig(outdir / f"BlocksPer100_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"BlocksPer100_{stage}.svg", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"BlocksPer100_{stage}.pdf", bbox_inches="tight")
+
+
+# ============================================================
+# TRIALS PER BLOCK TABLE
+# ============================================================
+
+def compute_trials_per_block_table(sessions_df):
+    print("\n=== Computing trials per block table ===")
+
+    records = []
+    block_order = ["sound", "action-right", "action-left"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+        except Exception as e:
+            print(f"⚠ Could not read {row['filename']}: {e}")
+            continue
+
+        if "block" not in df.columns:
+            print(f"⚠ Missing block column in {row['filename']}")
+            continue
+
+        df["block_change"] = (df["block"] != df["block"].shift(1)).astype(int)
+        df["block_index"] = df["block_change"].cumsum()
+
+        for _, dblk in df.groupby("block_index"):
+            blk_type = dblk["block"].iloc[0]
+            if blk_type not in block_order:
+                continue
+
+            records.append({
+                "animal": row["animal"],
+                "session_date": row["session_date"],
+                "session_id": f"{row['animal']}_{row['session_date']}",
+                "strain": row["strain"],
+                "stage": row["stage"],
+                "block_type": blk_type,
+                "n_trials": len(dblk),
+            })
+
+    out = pd.DataFrame(records)
+
+    print("\n=== TRIALS PER BLOCK TABLE ===")
+    print(out.head())
+
+    return out
+
+
+def plot_trials_per_block(df_trials_block, outdir, strain_colors, stage):
+    df_stage = df_trials_block[df_trials_block["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No trials/block data for stage: {stage}")
+        return
+
+    rng = np.random.default_rng(42)
+    block_order = ["sound", "action-right", "action-left"]
+
+    fig, ax = plt.subplots(figsize=(9, 6), dpi=plot_config["dpi"])
+
+    spacing = 2
+    data_x = np.arange(len(block_order)) * spacing
+    mean_x = data_x + 0.6
+    label_x = (data_x + mean_x) / 2
+    block_positions = dict(zip(block_order, data_x))
+
+    for _, row in df_stage.iterrows():
+        jitter = (rng.random() - 0.5) * 0.15
+        color = strain_colors.get(row["strain"], "gray")
+
+        ax.scatter(
+            block_positions[row["block_type"]] + jitter,
+            row["n_trials"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8
+        )
+
+    stats = (
+        df_stage.groupby("block_type")["n_trials"]
+        .agg(["mean", "sem"])
+        .reindex(block_order)
+    )
+
+    ax.errorbar(
+        mean_x,
+        stats["mean"].values,
+        yerr=stats["sem"].values,
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2
+    )
+
+    ax.set_xlim(-0.6, mean_x[-1] + 0.1)
+    ax.set_xticks(label_x)
+    ax.set_xticklabels(["Sound", "Action-R", "Action-L"], fontsize=plot_config["label_fontsize"])
+    ax.set_ylabel(
+        "Trials per block",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+    ax.set_title(
+        f"Trials per Block — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    ax.tick_params(labelsize=plot_config["tick_fontsize"])
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+    handles.append(
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            color="black",
+            markerfacecolor="black",
+            label="Overall mean ± SEM"
+        )
+    )
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    plt.tight_layout()
+    # plt.savefig(outdir / f"TrialsPerBlock_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"TrialsPerBlock_{stage}.svg", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"TrialsPerBlock_{stage}.pdf", bbox_inches="tight")
+
+
+# ============================================================
+# PE FIRST VS LAST BLOCKS
+# ============================================================
+
+def compute_pe_first_last_blocks(sessions_df, window=20):
+    print("\n=== Computing PE first vs last blocks ===")
+
+    records = []
+    block_order = ["sound", "action-right", "action-left"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+            tone_map = get_tone_map(row["animal"])
+        except Exception as e:
+            print(f"⚠ Error loading {row['filename']}: {e}")
+            continue
+
+        needed = {"block", "reward", "punishment", "omission", "8KHz", "16KHz"}
+        if not needed.issubset(df.columns):
+            continue
+
+        df["block_change"] = (df["block"] != df["block"].shift(1)).astype(int)
+        df["block_index"] = df["block_change"].cumsum()
+
+        block_seq = (
+            df.groupby("block_index")["block"]
+            .first()
+            .reset_index()
+            .rename(columns={"block": "block_type"})
+        )
+
+        for blk_type in block_order:
+            blk_indices = block_seq.loc[block_seq["block_type"] == blk_type, "block_index"].tolist()
+            if len(blk_indices) == 0:
+                continue
+
+            first_blocks = blk_indices[:2]
+            last_blocks = blk_indices[-2:]
+
+            for period_name, block_list in [("first", first_blocks), ("last", last_blocks)]:
+                pe_count = 0
+
+                for blk_idx in block_list:
+                    blk_df = df[df["block_index"] == blk_idx]
+                    if blk_df.empty:
+                        continue
+
+                    start_i = blk_df.index[0]
+                    prev_i = start_i - 1
+                    if prev_i < 0:
+                        continue
+
+                    prev_block = df.loc[prev_i, "block"]
+                    new_block = df.loc[start_i, "block"]
+                    next_trials = df.loc[start_i:start_i + window - 1]
+
+                    for _, tr in next_trials.iterrows():
+                        pe = classify_pe_after_switch(tr, new_block, prev_block, tone_map)
+                        if not pd.isna(pe):
+                            pe_count += pe
+
+                records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "block_type": blk_type,
+                    "period": period_name,
+                    "pe_count": pe_count
+                })
+
+    out = pd.DataFrame(records)
+
+    print("\n=== PE FIRST/LAST BLOCKS ===")
+    print(out.head())
+
+    return out
+
+
+def plot_pe_first_last_blocks(df_pe_fl, outdir, strain_colors, stage):
+    df_stage = df_pe_fl[df_pe_fl["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No PE first/last data for stage: {stage}")
+        return
+
+    block_order = ["sound", "action-right", "action-left"]
+    period_order = ["first", "last"]
+
+    fig, axes = plt.subplots(1, 3, figsize=(14, 5), dpi=plot_config["dpi"], sharey=True)
+    rng = np.random.default_rng(42)
+
+    for ax, blk_type in zip(axes, block_order):
+        dblk = df_stage[df_stage["block_type"] == blk_type].copy()
+
+        for _, row in dblk.iterrows():
+            x = 0 if row["period"] == "first" else 1
+            jitter = (rng.random() - 0.5) * 0.12
+            color = strain_colors.get(row["strain"], "gray")
+
+            ax.scatter(
+                x + jitter,
+                row["pe_count"],
+                marker="^",
+                s=130,
+                facecolors=color,
+                edgecolors=color,
+                linewidths=1.8
+            )
+
+        stats = dblk.groupby("period")["pe_count"].agg(["mean", "sem"]).reindex(period_order)
+
+        ax.errorbar(
+            [0.28, 1.28],
+            stats["mean"].values,
+            yerr=stats["sem"].values,
+            fmt="^",
+            markersize=12,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.set_xticks([0.14, 1.14])
+        ax.set_xticklabels(["First", "Last"], fontsize=plot_config["tick_fontsize"])
+        ax.set_title(blk_type, fontsize=plot_config["title_fontsize"])
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    axes[0].set_ylabel(
+        "Perseverative errors",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    fig.suptitle(
+        f"PE in First vs Last Blocks — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    plt.tight_layout()
+    # plt.savefig(outdir / f"PE_FirstLastBlocks_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"PE_FirstLastBlocks_{stage}.svg", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"PE_FirstLastBlocks_{stage}.pdf", bbox_inches="tight")
+
+
+# ============================================================
+# OMISSIONS PER STIMULUS IN ACTION BLOCKS
+# ============================================================
+
+def compute_actionblock_stim_omissions(sessions_df):
+    print("\n=== Computing omissions per stimulus in action blocks ===")
+
+    records = []
+    action_blocks = ["action-right", "action-left"]
+    stim_order = ["8KHz", "16KHz"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+            tone_map = get_tone_map(row["animal"])
+        except Exception as e:
+            print(f"⚠ Error loading {row['filename']}: {e}")
+            continue
+
+        needed = {"block", "omission", "catch_trial", "8KHz", "16KHz"}
+        if not needed.issubset(df.columns):
+            continue
+
+        df["stim"] = df.apply(
+            lambda r: "8KHz" if r["8KHz"] == 1 else ("16KHz" if r["16KHz"] == 1 else np.nan),
+            axis=1
+        )
+
+        for blk in action_blocks:
+            dblk = df[df["block"] == blk].copy()
+            if dblk.empty:
+                continue
+
+            for stim in stim_order:
+                dstim = dblk[dblk["stim"] == stim].copy()
+                if dstim.empty:
+                    continue
+
+                n_trials = len(dstim)
+                n_omissions = len(dstim[(dstim["omission"] == 1) & (dstim["catch_trial"] == 0)])
+                omission_rate = n_omissions / n_trials if n_trials > 0 else np.nan
+
+                records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "action_block": blk,
+                    "stim": stim,
+                    "sound_rule_side": tone_map[stim],
+                    "n_trials": n_trials,
+                    "n_omissions": n_omissions,
+                    "omission_rate": omission_rate
+                })
+
+    out = pd.DataFrame(records)
+
+    print("\n=== ACTION BLOCK STIM OMISSIONS ===")
+    print(out.head())
+
+    return out
+
+
+def plot_actionblock_stim_omissions(df_stim_omit, outdir, strain_colors, stage):
+    df_stage = df_stim_omit[df_stim_omit["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No stim omission data for stage: {stage}")
+        return
+
+    block_order = ["action-right", "action-left"]
+    stim_order = ["8KHz", "16KHz"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), dpi=plot_config["dpi"], sharey=True)
+    rng = np.random.default_rng(42)
+
+    for ax, blk in zip(axes, block_order):
+        dblk = df_stage[df_stage["action_block"] == blk].copy()
+
+        for _, row in dblk.iterrows():
+            x = 0 if row["stim"] == "8KHz" else 1
+            jitter = (rng.random() - 0.5) * 0.12
+            color = strain_colors.get(row["strain"], "gray")
+
+            ax.scatter(
+                x + jitter,
+                row["omission_rate"] * 100,
+                marker="^",
+                s=130,
+                facecolors=color,
+                edgecolors=color,
+                linewidths=1.8
+            )
+
+        stats = dblk.groupby("stim")["omission_rate"].agg(["mean", "sem"]).reindex(stim_order)
+
+        ax.errorbar(
+            [0.25, 1.25],
+            stats["mean"].values * 100,
+            yerr=stats["sem"].fillna(0).values * 100,
+            fmt="^",
+            markersize=12,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.set_xticks([0.12, 1.12])
+        ax.set_xticklabels(stim_order, fontsize=plot_config["tick_fontsize"])
+        ax.set_title(blk, fontsize=plot_config["title_fontsize"])
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    axes[0].set_ylabel(
+        "Omission rate (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    fig.suptitle(
+        f"Omissions by Stimulus in Action Blocks — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    plt.tight_layout()
+    # plt.savefig(outdir / f"ActionBlockStimOmissions_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"ActionBlockStimOmissions_{stage}.svg", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"ActionBlockStimOmissions_{stage}.pdf", bbox_inches="tight")
+
+
+# ============================================================
+# CHOICE BIAS BY STIMULUS IN ACTION BLOCKS
+# ============================================================
+
+def compute_actionblock_choice_bias(sessions_df):
+    print("\n=== Computing choice bias by stimulus in action blocks ===")
+
+    records = []
+    action_blocks = ["action-right", "action-left"]
+    stim_order = ["8KHz", "16KHz"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+            tone_map = get_tone_map(row["animal"])
+        except Exception as e:
+            print(f"⚠ Error loading {row['filename']}: {e}")
+            continue
+
+        needed = {"block", "reward", "punishment", "omission", "8KHz", "16KHz"}
+        if not needed.issubset(df.columns):
+            continue
+
+        df["stim"] = df.apply(
+            lambda r: "8KHz" if r["8KHz"] == 1 else ("16KHz" if r["16KHz"] == 1 else np.nan),
+            axis=1
+        )
+
+        for blk in action_blocks:
+            dblk = df[df["block"] == blk].copy()
+            if dblk.empty:
+                continue
+
+            for stim in stim_order:
+                dstim = dblk[(dblk["stim"] == stim) & (dblk["omission"] == 0)].copy()
+                if dstim.empty:
+                    continue
+
+                if blk == "action-right":
+                    n_right = (dstim["reward"] == 1).sum()
+                    n_left = (dstim["punishment"] == 1).sum()
+                elif blk == "action-left":
+                    n_left = (dstim["reward"] == 1).sum()
+                    n_right = (dstim["punishment"] == 1).sum()
+                else:
+                    continue
+
+                total_choices = n_left + n_right
+                p_right = n_right / total_choices if total_choices > 0 else np.nan
+
+                records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "action_block": blk,
+                    "stim": stim,
+                    "sound_rule_side": tone_map[stim],
+                    "p_right": p_right
+                })
+
+    out = pd.DataFrame(records)
+
+    print("\n=== ACTION BLOCK CHOICE BIAS ===")
+    print(out.head())
+
+    return out
+
+
+def plot_actionblock_choice_bias(df_choice_bias, outdir, strain_colors, stage):
+    df_stage = df_choice_bias[df_choice_bias["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No choice bias data for stage: {stage}")
+        return
+
+    block_order = ["action-right", "action-left"]
+    stim_order = ["8KHz", "16KHz"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), dpi=plot_config["dpi"], sharey=True)
+    rng = np.random.default_rng(42)
+
+    for ax, blk in zip(axes, block_order):
+        dblk = df_stage[df_stage["action_block"] == blk].copy()
+
+        for _, row in dblk.iterrows():
+            x = 0 if row["stim"] == "8KHz" else 1
+            jitter = (rng.random() - 0.5) * 0.12
+            color = strain_colors.get(row["strain"], "gray")
+
+            ax.scatter(
+                x + jitter,
+                row["p_right"] * 100,
+                marker="^",
+                s=130,
+                facecolors=color,
+                edgecolors=color,
+                linewidths=1.8
+            )
+
+        stats = dblk.groupby("stim")["p_right"].agg(["mean", "sem"]).reindex(stim_order)
+
+        ax.errorbar(
+            [0.25, 1.25],
+            stats["mean"].values * 100,
+            yerr=stats["sem"].fillna(0).values * 100,
+            fmt="^",
+            markersize=12,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.axhline(50, linestyle="--", color="gray", alpha=0.5)
+        ax.set_xticks([0.12, 1.12])
+        ax.set_xticklabels(stim_order, fontsize=plot_config["tick_fontsize"])
+        ax.set_title(blk, fontsize=plot_config["title_fontsize"])
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    axes[0].set_ylabel(
+        "P(right choice) (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    fig.suptitle(
+        f"Choice Bias by Stimulus in Action Blocks — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    plt.tight_layout()
+    # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.png", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.svg", dpi=600, bbox_inches="tight")
+    # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.pdf", bbox_inches="tight")
 
 #%%
 
@@ -2214,6 +3190,8 @@ def main():
     print(metrics_df.head())
 
     perf_df, perf_block_df = compute_performance_tables(sessions_df)
+    # performance table stored in variable
+    performance_table = perf_df
     perf_df.to_csv(OUTDIR / "adaptive_performance_per_session.csv", index=False)
     perf_block_df.to_csv(OUTDIR / "adaptive_performance_per_blocktype.csv", index=False)
 
@@ -2277,12 +3255,96 @@ def main():
 
     plot_omissions_blocktype(df_omissions, OUTDIR, STRAIN_COLORS, stage="naive")
     plot_omissions_blocktype(df_omissions, OUTDIR, STRAIN_COLORS, stage="trained")
+    
+    percentcorrect_df, percentcorrect_block_df = compute_percentcorrect_tables(sessions_df)
+    percentcorrect_table = percentcorrect_df
+    
+    plot_percentcorrect_per_session(percentcorrect_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_percentcorrect_per_session(percentcorrect_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_percentcorrect_per_blocktype(percentcorrect_block_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_percentcorrect_per_blocktype(percentcorrect_block_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    # NEW TABLES
+    df_blocks100 = compute_blocks_per_100_table(metrics_df)
+    df_blocks100.to_csv(OUTDIR / "blocks_per_100_trials.csv", index=False)
+
+    df_trials_block = compute_trials_per_block_table(sessions_df)
+    df_trials_block.to_csv(OUTDIR / "trials_per_block.csv", index=False)
+
+    df_pe_fl = compute_pe_first_last_blocks(sessions_df, window=20)
+    df_pe_fl.to_csv(OUTDIR / "pe_first_last_blocks.csv", index=False)
+
+    df_stim_omit = compute_actionblock_stim_omissions(sessions_df)
+    df_stim_omit.to_csv(OUTDIR / "actionblock_stim_omissions.csv", index=False)
+
+    df_choice_bias = compute_actionblock_choice_bias(sessions_df)
+    df_choice_bias.to_csv(OUTDIR / "actionblock_choice_bias.csv", index=False)
+
+    # EXISTING PLOTS
+    plot_triangle_summary(metrics_df, stage="naive", outdir=OUTDIR, strain_colors=STRAIN_COLORS)
+    plot_triangle_summary(metrics_df, stage="trained", outdir=OUTDIR, strain_colors=STRAIN_COLORS)
+
+    plot_performance_per_session(perf_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_performance_per_session(perf_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_performance_per_blocktype(perf_block_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_performance_per_blocktype(perf_block_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_trials_until_switch_blocktype(
+        session_means_df, overall_stats_df, OUTDIR, STRAIN_COLORS, stage="naive"
+    )
+    plot_trials_until_switch_blocktype(
+        session_means_df, overall_stats_df, OUTDIR, STRAIN_COLORS, stage="trained"
+    )
+
+    plot_pe_triangle(pe_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_pe_triangle(pe_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_pe_timecourse(session_timecourse_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_pe_timecourse(session_timecourse_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_latency_panels_by_stage(lat_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_latency_panels_by_stage(lat_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_latency_timecourse(
+        session_latency_timecourse_df, OUTDIR, STRAIN_COLORS, stage="naive"
+    )
+    plot_latency_timecourse(
+        session_latency_timecourse_df, OUTDIR, STRAIN_COLORS, stage="trained"
+    )
+
+    plot_omissions_blocktype(df_omissions, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_omissions_blocktype(df_omissions, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_percentcorrect_per_session(percentcorrect_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_percentcorrect_per_session(percentcorrect_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_percentcorrect_per_blocktype(percentcorrect_block_df, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_percentcorrect_per_blocktype(percentcorrect_block_df, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    # NEW PLOTS
+    plot_blocks_per_100(df_blocks100, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_blocks_per_100(df_blocks100, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_trials_per_block(df_trials_block, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_trials_per_block(df_trials_block, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_pe_first_last_blocks(df_pe_fl, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_pe_first_last_blocks(df_pe_fl, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_actionblock_stim_omissions(df_stim_omit, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_actionblock_stim_omissions(df_stim_omit, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_actionblock_choice_bias(df_choice_bias, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_actionblock_choice_bias(df_choice_bias, OUTDIR, STRAIN_COLORS, stage="trained")
+
 
     print("Done.")
-    return metrics_df, sessions_df
+    return metrics_df, sessions_df, performance_table, percentcorrect_table
 
 
 if __name__ == "__main__":
-    metrics_df, sessions_df = main()
+    metrics_df, sessions_df, performance_table, percentcorrect_table = main()
     
     
