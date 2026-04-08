@@ -40,10 +40,10 @@ OUTDIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 
 STRAIN_COLORS = {
-    "Tlx3": "#7ABEC6",
-    "Fezf2": "#A388B1",
-    "Fmr1-Fezf2": "#B1536F",
-    "Fmr1-Tlx3": "#B7CB92",
+    "Tlx3": "#32929D",
+    "Fezf2": "#B1536F",
+    "Fmr1-Fezf2": "#E78848",
+    "Fmr1-Tlx3": "#87B663",
 }
 
 # ============================================================
@@ -348,13 +348,6 @@ def compute_performance_tables(sessions_df):
 # PLOT 1: QC PANELS
 # all sessions
 
-STRAIN_COLORS = {
-    "Tlx3": "#7ABEC6",
-    "Fezf2": "#A388B1",
-    "Fmr1-Fezf2": "#B1536F",
-    "Fmr1-Tlx3": "#B7CB92",
-}
-
 
 def plot_qc_criteria_panels(behavior_df, outdir: Path):
     if behavior_df.empty:
@@ -362,7 +355,7 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
         return None, None
 
     stage_order = ["naive", "trained"]
-    stage_titles = {"naive": "Naive", "trained": "Trained"}
+    stage_titles = {"naive": "Pre-Adaptive", "trained": "Post-Adaptive"}
 
     metric_specs = [
         {"col": "total_trials", "ylabel": "Total trials", "title": "Total trials", "ylims": None},
@@ -377,6 +370,13 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
 
     fig, axes = plt.subplots(2, 3, figsize=(16, 9), dpi=300)
     rng = np.random.default_rng(42)
+    
+    # ---------- GLOBAL FONT SIZES ----------
+    TITLE_SIZE = 16
+    LABEL_SIZE = 13
+    TICK_SIZE = 8
+    LEGEND_SIZE = 12
+    SUBTITLE_SIZE = 11
 
     for row_idx, stage in enumerate(stage_order):
         df_stage = behavior_df[behavior_df["stage"].astype(str).str.lower() == stage].copy()
@@ -431,8 +431,8 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
 
             # ---------- LABELS ----------
             ax.set_title(f"{stage_titles[stage]} — {spec['title']}", fontsize=13)
-            ax.set_ylabel(spec["ylabel"], fontsize=11)
-            ax.set_xlabel("Sessions", fontsize=11)
+            ax.set_ylabel(spec["ylabel"], fontsize=LABEL_SIZE)
+            ax.set_xlabel("Sessions", fontsize=LABEL_SIZE)
 
             ax.set_xlim(-0.8, len(df_stage) - 0.2)
 
@@ -440,7 +440,7 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
                 ax.set_ylim(spec["ylims"])
 
             ax.set_xticks(x)
-            ax.set_xticklabels(df_stage["animal"].astype(str), rotation=90, fontsize=8)
+            ax.set_xticklabels(df_stage["animal"].astype(str), rotation=90, fontsize=TICK_SIZE)
 
             ax.grid(axis="y", linestyle="--", alpha=0.3)
             ax.spines["top"].set_visible(False)
@@ -454,7 +454,7 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
                     transform=ax.transAxes,
                     ha="right",
                     va="top",
-                    fontsize=10,
+                    fontsize=SUBTITLE_SIZE,
                     bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="gray", alpha=0.8)
                 )
 
@@ -477,15 +477,16 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
         ncol=4,
         frameon=False,
         bbox_to_anchor=(0.5, 1.02),
-        fontsize=11
+        fontsize=LEGEND_SIZE
     )
 
-    fig.suptitle("Behavior QC metrics by session", fontsize=16, y=1.05)
+    fig.suptitle("Behavior QC metrics by session", fontsize=TITLE_SIZE, y=1.05)
     plt.tight_layout()
     fig.subplots_adjust(hspace=0.55)
 
     fig.savefig(outdir / "behavior_qc_criteria_panels.png", dpi=500, bbox_inches="tight")
     fig.savefig(outdir / "behavior_qc_criteria_panels.pdf", dpi=500, bbox_inches="tight")
+    fig.savefig(outdir / "behavior_qc_criteria_panels.svg", dpi=500, bbox_inches="tight")
 
     return fig, axes
 
@@ -495,13 +496,6 @@ def plot_qc_criteria_panels(behavior_df, outdir: Path):
 # 3D QC PLOT
 # ============================================================
 
-STRAIN_COLORS = {
-    "Tlx3": "#7ABEC6",
-    "Fezf2": "#A388B1",
-    "Fmr1-Fezf2": "#B1536F",
-    "Fmr1-Tlx3": "#B7CB92",
-}
-
 
 def plot_qc_3d_panels(behavior_df, outdir: Path):
     if behavior_df.empty:
@@ -509,9 +503,9 @@ def plot_qc_3d_panels(behavior_df, outdir: Path):
         return None, None
 
     stage_order = ["naive", "trained"]
-    stage_titles = {"naive": "Naive", "trained": "Trained"}
+    stage_titles = {"naive": "Pre-Adaptive", "trained": "Post-Adaptive"}
 
-    fig = plt.figure(figsize=(14, 6), dpi=300)
+    fig = plt.figure(figsize=(14, 6), dpi=500)
     axes = []
 
     for i, stage in enumerate(stage_order, start=1):
@@ -591,7 +585,7 @@ def plot_qc_3d_panels(behavior_df, outdir: Path):
         X_plane = np.full_like(yy, trials_cutoff)
         ax.plot_surface(
             X_plane, yy, zz,
-            color="#cccccc",
+            color=None,
             alpha=0.18,
             linewidth=0,
             shade=False
@@ -717,6 +711,8 @@ def plot_qc_3d_panels(behavior_df, outdir: Path):
 
     fig.savefig(outdir / "behavior_qc_3d_panels.png", dpi=500, bbox_inches="tight")
     fig.savefig(outdir / "behavior_qc_3d_panels.pdf", dpi=500, bbox_inches="tight")
+    fig.savefig(outdir / "behavior_qc_3d_panels.svg", dpi=500, bbox_inches="tight")
+
 
     return fig, axes
 
@@ -733,7 +729,7 @@ def plot_included_panels(behavior_df, outdir: Path):
         return None, None
 
     stage_order = ["naive", "trained"]
-    stage_titles = {"naive": "Naive", "trained": "Trained"}
+    stage_titles = {"naive": "Pre-Adaptive", "trained": "Post-Adaptive"}
 
     metric_specs = [
         {"col": "total_trials", "ylabel": "Total trials", "title": "Total trials", "ylims": None},
@@ -746,8 +742,15 @@ def plot_included_panels(behavior_df, outdir: Path):
         "trained": {"total_trials": 300, "percent_omissions": 30, "percent_correct": 60},
     }
 
-    fig, axes = plt.subplots(2, 3, figsize=(16, 9), dpi=300)
+    fig, axes = plt.subplots(2, 3, figsize=(16, 9), dpi=500)
     rng = np.random.default_rng(42)
+    
+    # ---------- GLOBAL FONT SIZES ----------
+    TITLE_SIZE = 16
+    LABEL_SIZE = 13
+    TICK_SIZE = 8
+    LEGEND_SIZE = 12
+    SUBTITLE_SIZE = 11
 
     for row_idx, stage in enumerate(stage_order):
         df_stage = behavior_df[behavior_df["stage"].astype(str).str.lower() == stage].copy()
@@ -801,15 +804,15 @@ def plot_included_panels(behavior_df, outdir: Path):
                 )
 
             ax.set_title(f"{stage_titles[stage]} — {spec['title']}", fontsize=13)
-            ax.set_ylabel(spec["ylabel"], fontsize=11)
-            ax.set_xlabel("Sessions", fontsize=11)
+            ax.set_ylabel(spec["ylabel"], fontsize=LABEL_SIZE)
+            ax.set_xlabel("Sessions", fontsize=LABEL_SIZE)
             ax.set_xlim(-0.8, len(df_stage) - 0.2)
 
             if spec["ylims"] is not None:
                 ax.set_ylim(spec["ylims"])
 
             ax.set_xticks(x)
-            ax.set_xticklabels(df_stage["animal"].astype(str), rotation=90, fontsize=8)
+            ax.set_xticklabels(df_stage["animal"].astype(str), rotation=90, fontsize=TICK_SIZE)
 
             ax.grid(axis="y", linestyle="--", alpha=0.3)
             ax.spines["top"].set_visible(False)
@@ -822,7 +825,7 @@ def plot_included_panels(behavior_df, outdir: Path):
                     transform=ax.transAxes,
                     ha="right",
                     va="top",
-                    fontsize=10,
+                    fontsize=SUBTITLE_SIZE,
                     bbox=dict(boxstyle="round,pad=0.25", facecolor="white", edgecolor="gray", alpha=0.8)
                 )
 
@@ -845,16 +848,17 @@ def plot_included_panels(behavior_df, outdir: Path):
         ncol=4,
         frameon=False,
         bbox_to_anchor=(0.5, 1.02),
-        fontsize=11
+        fontsize=LEGEND_SIZE
     )
 
-    fig.suptitle("Behavior QC metrics by session", fontsize=16, y=1.05)
+    fig.suptitle("Behavior QC metrics by session", fontsize=TITLE_SIZE, y=1.05)
     plt.tight_layout()
     fig.subplots_adjust(hspace=0.55)
 
 
     fig.savefig(outdir / "behavior_qc_included_panels.png", dpi=500, bbox_inches="tight")
     fig.savefig(outdir / "behavior_qc_included_panels.pdf", dpi=500, bbox_inches="tight")
+    fig.savefig(outdir / "behavior_qc_included_panels.svg", dpi=500, bbox_inches="tight")
 
     return fig, axes
 
@@ -960,6 +964,78 @@ def main():
     print("\nDone.")
     return metrics_df, sessions_df, performance_table
 
+# ============================================================
+# EXTRA VERSION:
+# same plots, excluding Fmr1-Fezf2, and saving plots only
+# ============================================================
+
+def main_exclude_fmr1_fezf2_plots_only():
+    meta = pd.read_excel(SESSIONS_XLSX, dtype={"animal": str, "session_date": str})
+    meta.columns = [c.strip() for c in meta.columns]
+
+    required_cols = ["animal", "sex", "strain", "cohort", "session_date", "stage"]
+    for col in required_cols:
+        if col not in meta.columns:
+            raise ValueError(f"Missing required column in Excel file: {col}")
+
+    meta["animal"] = meta["animal"].astype(str).str.strip().str.replace(r"\.0$", "", regex=True)
+    meta["session_date"] = meta["session_date"].astype(str).str.strip().str.replace(r"\.0$", "", regex=True)
+    meta["stage"] = meta["stage"].astype(str).str.strip().str.lower()
+    meta["strain"] = meta["strain"].astype(str).str.strip()
+    meta["cohort"] = pd.to_numeric(meta["cohort"], errors="coerce")
+    meta = meta[meta["cohort"].notna()].copy()
+    meta["cohort"] = meta["cohort"].astype(int)
+
+    meta = meta[meta["stage"].isin(["naive", "trained"])].copy()
+
+    files_df = find_adaptive_files(meta)
+
+    sessions_df = files_df.merge(
+        meta,
+        on=["animal", "cohort", "session_date"],
+        how="inner"
+    )
+
+    if sessions_df.empty:
+        raise ValueError("No matching sessions found between metadata Excel and files.")
+
+    print(f"Matched {len(sessions_df)} adaptive sessions for extra no-Fmr1-Fezf2 plots")
+
+    behavior_df = compute_performance_tables(sessions_df)
+
+    if behavior_df.empty:
+        raise ValueError("No behavior QC metrics could be computed for extra no-Fmr1-Fezf2 plots.")
+
+    # Exclude Fmr1-Fezf2 only for this extra plotting version
+    behavior_df_no_fmr1_fezf2 = behavior_df[
+        behavior_df["strain"].astype(str).str.strip() != "Fmr1-Fezf2"
+    ].copy()
+
+    if behavior_df_no_fmr1_fezf2.empty:
+        raise ValueError("No sessions left after excluding Fmr1-Fezf2.")
+
+    # Save extra plots with different filenames so the original ones are kept
+    fig1, axes1 = plot_qc_criteria_panels(behavior_df_no_fmr1_fezf2, OUTDIR)
+    if fig1 is not None:
+        fig1.savefig(OUTDIR / "behavior_qc_criteria_panels_no_fmr1_fezf2.png", dpi=500, bbox_inches="tight")
+        fig1.savefig(OUTDIR / "behavior_qc_criteria_panels_no_fmr1_fezf2.pdf", dpi=500, bbox_inches="tight")
+        fig1.savefig(OUTDIR / "behavior_qc_criteria_panels_no_fmr1_fezf2.svg", dpi=500, bbox_inches="tight")
+
+    fig2, axes2 = plot_qc_3d_panels(behavior_df_no_fmr1_fezf2, OUTDIR)
+    if fig2 is not None:
+        fig2.savefig(OUTDIR / "behavior_qc_3d_panels_no_fmr1_fezf2.png", dpi=500, bbox_inches="tight")
+        fig2.savefig(OUTDIR / "behavior_qc_3d_panels_no_fmr1_fezf2.pdf", dpi=500, bbox_inches="tight")
+        fig2.savefig(OUTDIR / "behavior_qc_3d_panels_no_fmr1_fezf2.svg", dpi=500, bbox_inches="tight")
+
+    fig3, axes3 = plot_included_panels(behavior_df_no_fmr1_fezf2, OUTDIR)
+    if fig3 is not None:
+        fig3.savefig(OUTDIR / "behavior_qc_included_panels_no_fmr1_fezf2.png", dpi=500, bbox_inches="tight")
+        fig3.savefig(OUTDIR / "behavior_qc_included_panels_no_fmr1_fezf2.pdf", dpi=500, bbox_inches="tight")
+        fig3.savefig(OUTDIR / "behavior_qc_included_panels_no_fmr1_fezf2.svg", dpi=500, bbox_inches="tight")
+
+    print("\nDone extra plots without Fmr1-Fezf2.")
+    return behavior_df_no_fmr1_fezf2
 
 if __name__ == "__main__":
     metrics_df, sessions_df, performance_table = main()
+    behavior_df_no_fmr1_fezf2 = main_exclude_fmr1_fezf2_plots_only()

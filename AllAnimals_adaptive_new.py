@@ -26,7 +26,7 @@ SESSIONS_XLSX = Path(
 )
 
 OUTDIR = Path(
-    r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/plots/adaptive_task"
+    r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/plots/adaptive_task/script1"
 )
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
@@ -34,10 +34,10 @@ OUTDIR.mkdir(parents=True, exist_ok=True)
 # --------- Choose colors for plots ----------
 
 STRAIN_COLORS = {
-    "Tlx3": "#7ABEC6",
-    "Fezf2": "#A388B1",
-    "Fmr1-Fezf2": "#B1536F",
-    "Fmr1-Tlx3": "#B7CB92",
+    "Tlx3": "#91D1C6",
+    "Fezf2": "#C4889A",
+    "Fmr1-Fezf2": "#EEB583",
+    "Fmr1-Tlx3": "#A9C893",
 }
 
 
@@ -1321,8 +1321,8 @@ def plot_pe_timecourse(session_timecourse_df, outdir, strain_colors, stage):
     )
 
     plt.tight_layout()
-    # plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.png", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.png", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.svg", dpi=600, bbox_inches="tight")
     plt.savefig(outdir / f"Adaptive_PE_TimeCourse_{stage}.pdf", bbox_inches="tight")
 
 
@@ -1605,8 +1605,8 @@ def plot_latency_panels_by_stage(lat_df, outdir, strain_colors, stage):
     )
 
     plt.tight_layout()
-    # plt.savefig(outdir / f"Latency_4Panels_{stage}.png", dpi=600, bbox_inches="tight")
-    # plt.savefig(outdir / f"Latency_4Panels_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Latency_4Panels_{stage}.png", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Latency_4Panels_{stage}.svg", dpi=600, bbox_inches="tight")
     plt.savefig(outdir / f"Latency_4Panels_{stage}.pdf", bbox_inches="tight")
 
 
@@ -3130,6 +3130,841 @@ def plot_actionblock_choice_bias(df_choice_bias, outdir, strain_colors, stage):
     # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.png", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.svg", dpi=600, bbox_inches="tight")
     # plt.savefig(outdir / f"ActionBlockChoiceBias_{stage}.pdf", bbox_inches="tight")
+    
+    
+    
+# ============================================================
+# OPPOSITE-SOUND BEHAVIOR IN ACTION BLOCKS
+# ============================================================
+
+def get_opposite_sound_for_action_block(action_block, tone_map):
+    """
+    For an action block, return the stimulus whose sound-rule side is opposite
+    to the required action in that block.
+
+    Example:
+    - action-right block -> opposite sound is the stimulus mapped to LEFT in sound blocks
+    - action-left block  -> opposite sound is the stimulus mapped to RIGHT in sound blocks
+    """
+    if action_block == "action-right":
+        opposite_side = "left"
+    elif action_block == "action-left":
+        opposite_side = "right"
+    else:
+        return np.nan
+
+    matches = [stim for stim, side in tone_map.items() if side == opposite_side]
+    return matches[0] if len(matches) else np.nan
+
+
+def compute_actionblock_opposite_sound_table(sessions_df):
+    print("\n=== Computing opposite-sound omissions/incorrect in action blocks ===")
+
+    records = []
+    action_blocks = ["action-right", "action-left"]
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+            tone_map = get_tone_map(row["animal"])
+        except Exception as e:
+            print(f"⚠ Error loading {row['filename']}: {e}")
+            continue
+
+        needed = {
+            "block", "reward", "punishment", "omission", "catch_trial", "8KHz", "16KHz"
+        }
+        if not needed.issubset(df.columns):
+            print(f"⚠ Missing columns in {row['filename']}")
+            continue
+
+        df["stim"] = df.apply(
+            lambda r: "8KHz" if r["8KHz"] == 1 else ("16KHz" if r["16KHz"] == 1 else np.nan),
+            axis=1
+        )
+
+        df["block_change"] = (df["block"] != df["block"].shift(1)).astype(int)
+        df["block_index"] = df["block_change"].cumsum()
+
+        block_seq = (
+            df.groupby("block_index")["block"]
+            .first()
+            .reset_index()
+            .rename(columns={"block": "block_type"})
+        )
+
+        for blk in action_blocks:
+            blk_indices = block_seq.loc[block_seq["block_type"] == blk, "block_index"].tolist()
+            if len(blk_indices) == 0:
+                continue
+
+            opposite_stim = get_opposite_sound_for_action_block(blk, tone_map)
+            if pd.isna(opposite_stim):
+                continue
+
+            for blk_idx in blk_indices:
+                dblk = df[df["block_index"] == blk_idx].copy()
+                dblk = dblk[dblk["stim"] == opposite_stim].copy()
+
+                if dblk.empty:
+                    continue
+
+                n_trials = len(dblk)
+                n_omissions = ((dblk["omission"] == 1) & (dblk["catch_trial"] == 0)).sum()
+                n_incorrect = (dblk["punishment"] == 1).sum()
+                n_correct = (dblk["reward"] == 1).sum()
+
+                omission_rate = n_omissions / n_trials if n_trials > 0 else np.nan
+                incorrect_rate = n_incorrect / n_trials if n_trials > 0 else np.nan
+                correct_rate = n_correct / n_trials if n_trials > 0 else np.nan
+
+                records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "action_block": blk,
+                    "block_index": blk_idx,
+                    "opposite_stim": opposite_stim,
+                    "opposite_sound_side": tone_map[opposite_stim],
+                    "n_trials": n_trials,
+                    "n_omissions": n_omissions,
+                    "n_incorrect": n_incorrect,
+                    "n_correct": n_correct,
+                    "omission_rate": omission_rate,
+                    "incorrect_rate": incorrect_rate,
+                    "correct_rate": correct_rate,
+                })
+
+    out = pd.DataFrame(records)
+
+    print("\n=== OPPOSITE-SOUND TABLE ===")
+    print(out.head())
+
+    return out
+
+
+def plot_opposite_sound_actionblocks(df_opposite, outdir, strain_colors, stage):
+    df_stage = df_opposite[df_opposite["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No opposite-sound data for stage: {stage}")
+        return
+
+    block_order = ["action-right", "action-left"]
+    metric_order = ["omission_rate", "incorrect_rate"]
+    metric_labels = ["Omissions", "Incorrect"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), dpi=plot_config["dpi"], sharey=True)
+    rng = np.random.default_rng(42)
+
+    for ax, blk in zip(axes, block_order):
+        dblk = df_stage[df_stage["action_block"] == blk].copy()
+
+        for _, row in dblk.iterrows():
+            color = strain_colors.get(row["strain"], "gray")
+
+            for x, metric in enumerate(metric_order):
+                jitter = (rng.random() - 0.5) * 0.12
+                ax.scatter(
+                    x + jitter,
+                    row[metric] * 100,
+                    marker="^",
+                    s=130,
+                    facecolors=color,
+                    edgecolors=color,
+                    linewidths=1.8
+                )
+
+        stats = dblk[metric_order].agg(["mean", "sem"]).T.reindex(metric_order)
+
+        ax.errorbar(
+            [0.25, 1.25],
+            stats["mean"].values * 100,
+            yerr=stats["sem"].fillna(0).values * 100,
+            fmt="^",
+            markersize=12,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.set_xticks([0.12, 1.12])
+        ax.set_xticklabels(metric_labels, fontsize=plot_config["tick_fontsize"])
+        ax.set_title(blk, fontsize=plot_config["title_fontsize"])
+        ax.set_ylim(0, 100)
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    axes[0].set_ylabel(
+        "Proportion of trials (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+
+    handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    fig.suptitle(
+        f"Opposite-Sound Strategy in Action Blocks — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    plt.tight_layout()
+    plt.savefig(outdir / f"OppositeSound_ActionBlocks_{stage}.png", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"OppositeSound_ActionBlocks_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"OppositeSound_ActionBlocks_{stage}.pdf", bbox_inches="tight")
+
+#%%first vs last block for plot above
+
+def compute_opposite_sound_first_last(df_opposite):
+    if df_opposite.empty:
+        return pd.DataFrame()
+
+    records = []
+
+    for (animal, session_date, action_block), d in df_opposite.groupby(
+        ["animal", "session_date", "action_block"]
+    ):
+        d = d.sort_values("block_index").copy()
+
+        if d.empty:
+            continue
+
+        first_row = d.iloc[0]
+        last_row = d.iloc[-1]
+
+        for period_name, row in [("first", first_row), ("last", last_row)]:
+            records.append({
+                "animal": row["animal"],
+                "session_date": row["session_date"],
+                "session_id": row["session_id"],
+                "strain": row["strain"],
+                "stage": row["stage"],
+                "action_block": row["action_block"],
+                "period": period_name,
+                "omission_rate": row["omission_rate"],
+                "incorrect_rate": row["incorrect_rate"],
+            })
+
+    return pd.DataFrame(records)
+
+
+def plot_opposite_sound_first_last(df_firstlast, outdir, strain_colors, stage):
+    df_stage = df_firstlast[df_firstlast["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No opposite-sound first/last data for stage: {stage}")
+        return
+
+    block_order = ["action-right", "action-left"]
+    period_order = ["first", "last"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5), dpi=plot_config["dpi"], sharey=True)
+    rng = np.random.default_rng(42)
+
+    for ax, blk in zip(axes, block_order):
+        dblk = df_stage[df_stage["action_block"] == blk].copy()
+
+        for _, row in dblk.iterrows():
+            color = strain_colors.get(row["strain"], "gray")
+            x_base = 0 if row["period"] == "first" else 1
+
+            # omission
+            j1 = (rng.random() - 0.5) * 0.08
+            ax.scatter(
+                x_base - 0.12 + j1,
+                row["omission_rate"] * 100,
+                marker="o",
+                s=90,
+                facecolors=color,
+                edgecolors=color,
+                linewidths=1.5,
+                alpha=0.85
+            )
+
+            # incorrect
+            j2 = (rng.random() - 0.5) * 0.08
+            ax.scatter(
+                x_base + 0.12 + j2,
+                row["incorrect_rate"] * 100,
+                marker="s",
+                s=90,
+                facecolors=color,
+                edgecolors=color,
+                linewidths=1.5,
+                alpha=0.85
+            )
+
+        stats = dblk.groupby("period")[["omission_rate", "incorrect_rate"]].agg(["mean", "sem"])
+        stats = stats.reindex(period_order)
+
+        ax.errorbar(
+            [-0.12, 0.88],
+            stats[("omission_rate", "mean")].values * 100,
+            yerr=stats[("omission_rate", "sem")].fillna(0).values * 100,
+            fmt="o",
+            markersize=9,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.errorbar(
+            [0.12, 1.12],
+            stats[("incorrect_rate", "mean")].values * 100,
+            yerr=stats[("incorrect_rate", "sem")].fillna(0).values * 100,
+            fmt="s",
+            markersize=9,
+            color="black",
+            capsize=4,
+            linewidth=2
+        )
+
+        ax.set_xticks([0, 1])
+        ax.set_xticklabels(["First", "Last"], fontsize=plot_config["tick_fontsize"])
+        ax.set_title(blk, fontsize=plot_config["title_fontsize"])
+        ax.set_ylim(0, 100)
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+    axes[0].set_ylabel(
+        "Proportion of trials (%)",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+
+    metric_handles = [
+        plt.Line2D([0], [0], marker="o", linestyle="", color="black", markersize=8, label="Omissions"),
+        plt.Line2D([0], [0], marker="s", linestyle="", color="black", markersize=8, label="Incorrect"),
+    ]
+    strain_handles = [
+        plt.Line2D(
+            [0], [0], marker="^", linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=metric_handles + strain_handles, frameon=False)
+    fig.suptitle(
+        f"Opposite-Sound Strategy: First vs Last Action Block — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    plt.tight_layout()
+    plt.savefig(outdir / f"OppositeSound_FirstLast_{stage}.png", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"OppositeSound_FirstLast_{stage}.svg", dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"OppositeSound_FirstLast_{stage}.pdf", bbox_inches="tight")    
+    
+    
+# ============================================================
+# PAPER-STYLE SWITCH TIME COURSE
+# ============================================================
+
+def classify_switch_trial_outcome(row, new_block, prev_block, tone_map):
+    """
+    Returns:
+        "correct"
+        "perseverative"
+        "other_error"
+        np.nan   (for omissions / unclassified)
+    """
+
+    if row["omission"] == 1:
+        return np.nan
+
+    # stimulus identity
+    if "8KHz" in row.index and row["8KHz"] == 1:
+        stim = "8KHz"
+    elif "16KHz" in row.index and row["16KHz"] == 1:
+        stim = "16KHz"
+    else:
+        return np.nan
+
+    habitual = tone_map[stim]
+    new_correct = correct_side(new_block, stim, tone_map)
+    prev_correct = correct_side(prev_block, stim, tone_map)
+
+    if row["reward"] == 1:
+        return "correct"
+
+    if row["punishment"] == 1:
+        # Action -> Sound:
+        # perseverative = animal keeps doing previous action-rule response
+        if new_block == "sound":
+            return "perseverative" if habitual == prev_correct else "other_error"
+
+        # Sound -> Action:
+        # perseverative = animal keeps following the old sound rule instead of new repeated action
+        if prev_block == "sound":
+            return "perseverative" if habitual != new_correct else "other_error"
+
+    return np.nan
+
+def compute_switch_behavior_timecourse_tables(sessions_df, pre_window=20, post_window=60):
+    """
+    Builds one row per aligned trial around each valid switch.
+
+    Output columns:
+    animal, session_date, session_id, strain, stage,
+    switch_type, switch_id, trial_from_switch,
+    outcome, correct, perseverative, other_error
+    """
+    print("\n=== Computing paper-style switch behavior time course ===")
+
+    records = []
+
+    for _, row in sessions_df.iterrows():
+        try:
+            df = read_csv_cached(row["path"]).copy()
+            tone_map = get_tone_map(row["animal"])
+        except Exception as e:
+            print(f"⚠ Could not read {row['filename']}: {e}")
+            continue
+
+        needed_cols = {"block", "reward", "punishment", "omission", "8KHz", "16KHz"}
+        if not needed_cols.issubset(df.columns):
+            print(f"⚠ Missing columns for switch time course in {row['filename']}")
+            continue
+
+        switch_counter = 0
+
+        for i in range(1, len(df)):
+            prev_block = df.loc[i - 1, "block"]
+            new_block = df.loc[i, "block"]
+
+            if prev_block == new_block:
+                continue
+
+            if prev_block in ["action-left", "action-right"] and new_block == "sound":
+                switch_type = "Action→Sound"
+            elif prev_block == "sound" and new_block in ["action-left", "action-right"]:
+                switch_type = "Sound→Action"
+            else:
+                continue
+
+            switch_counter += 1
+            switch_id = f"{row['animal']}_{row['session_date']}_{switch_counter}"
+
+            start_idx = max(0, i - pre_window)
+            end_idx = min(len(df), i + post_window + 1)
+
+            aligned = df.iloc[start_idx:end_idx].copy()
+
+            for real_idx, tr in aligned.iterrows():
+                rel_trial = real_idx - i   # switch trial = 0
+
+                outcome = classify_switch_trial_outcome(tr, new_block, prev_block, tone_map)
+
+                records.append({
+                    "animal": row["animal"],
+                    "session_date": row["session_date"],
+                    "session_id": f"{row['animal']}_{row['session_date']}",
+                    "strain": row["strain"],
+                    "stage": row["stage"],
+                    "switch_type": switch_type,
+                    "switch_id": switch_id,
+                    "trial_from_switch": rel_trial,
+                    "outcome": outcome,
+                    "correct": 1 if outcome == "correct" else (0 if pd.notna(outcome) else np.nan),
+                    "perseverative": 1 if outcome == "perseverative" else (0 if pd.notna(outcome) else np.nan),
+                    "other_error": 1 if outcome == "other_error" else (0 if pd.notna(outcome) else np.nan),
+                })
+
+    behavior_timecourse_df = pd.DataFrame(records)
+
+    if behavior_timecourse_df.empty:
+        print("⚠ No switch behavior time course data computed.")
+        return pd.DataFrame(), pd.DataFrame()
+
+    # average within session first
+    session_timecourse_df = (
+        behavior_timecourse_df
+        .groupby(
+            ["animal", "session_date", "session_id", "strain", "stage",
+             "switch_type", "trial_from_switch"],
+            dropna=False
+        )[["correct", "perseverative", "other_error"]]
+        .mean()
+        .reset_index()
+    )
+
+    print("\n=== SWITCH BEHAVIOR TIME COURSE TABLE ===")
+    print(behavior_timecourse_df.head())
+
+    print("\n=== SESSION-AVERAGED SWITCH TIME COURSE TABLE ===")
+    print(session_timecourse_df.head())
+
+    return behavior_timecourse_df, session_timecourse_df
+
+def plot_switch_behavior_timecourse_by_strain(session_timecourse_df, outdir, strain_colors, stage):
+    df_stage = session_timecourse_df[session_timecourse_df["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No switch behavior time course data for stage: {stage}")
+        return
+
+    switch_order = ["Action→Sound", "Sound→Action"]
+    strains = [s for s in strain_colors.keys() if s in df_stage["strain"].astype(str).unique()]
+
+    if len(strains) == 0:
+        print(f"⚠ No strains found for stage: {stage}")
+        return
+
+    nrows = len(strains)
+    ncols = 2
+
+    fig, axes = plt.subplots(
+        nrows, ncols,
+        figsize=(10, 3.2 * nrows),
+        dpi=plot_config["dpi"],
+        sharex=True,
+        sharey=True,
+        squeeze=False
+    )
+
+    for r, strain in enumerate(strains):
+        for c, switch_type in enumerate(switch_order):
+            ax = axes[r, c]
+
+            df_panel = df_stage[
+                (df_stage["strain"] == strain) &
+                (df_stage["switch_type"] == switch_type)
+            ].copy()
+
+            if df_panel.empty:
+                ax.set_visible(False)
+                continue
+
+            stats_df = (
+                df_panel
+                .groupby("trial_from_switch")[["correct", "perseverative"]]
+                .agg(["mean", "sem"])
+            )
+
+            stats_df.columns = [
+                "_".join(col).strip() for col in stats_df.columns.to_flat_index()
+            ]
+            stats_df = stats_df.reset_index().sort_values("trial_from_switch")
+
+            x = stats_df["trial_from_switch"].values
+            color = strain_colors.get(strain, "black")
+
+            # Correct = filled circles
+            y_corr = stats_df["correct_mean"].values
+            sem_corr = stats_df["correct_sem"].fillna(0).values
+
+            ax.errorbar(
+                x, y_corr,
+                yerr=sem_corr,
+                fmt="-o",
+                color=color,
+                linewidth=1.8,
+                markersize=4,
+                capsize=2,
+                markerfacecolor=color,
+                markeredgecolor=color,
+                alpha=0.95
+            )
+
+            # Perseverative = open circles
+            y_pe = stats_df["perseverative_mean"].values
+            sem_pe = stats_df["perseverative_sem"].fillna(0).values
+
+            ax.errorbar(
+                x, y_pe,
+                yerr=sem_pe,
+                fmt="-o",
+                color=color,
+                linewidth=1.4,
+                markersize=4,
+                capsize=2,
+                markerfacecolor="white",
+                markeredgecolor=color,
+                alpha=0.95
+            )
+
+            ax.axvline(0, color="black", linewidth=1)
+            ax.set_ylim(0, 1.02)
+            ax.set_xlim(-20, 60)
+            ax.tick_params(labelsize=plot_config["tick_fontsize"])
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+            if r == 0:
+                ax.set_title(switch_type, fontsize=plot_config["title_fontsize"])
+
+            if c == 0:
+                ax.set_ylabel(
+                    f"{strain}\nFraction of trials",
+                    fontsize=plot_config["label_fontsize"],
+                    labelpad=plot_config["ylabel_pad"]
+                )
+
+            if r == nrows - 1:
+                ax.set_xlabel(
+                    "Trial from switch",
+                    fontsize=plot_config["label_fontsize"]
+                )
+
+            # optional annotations like paper
+            if c == 0:
+                ax.text(42, 0.72, "Correct", fontsize=12)
+                ax.text(34, 0.18, "Perseverative\nerror", fontsize=12)
+            else:
+                ax.text(42, 0.78, "Correct", fontsize=12)
+                ax.text(34, 0.18, "Perseverative\nerror", fontsize=12)
+
+    style_handles = [
+        plt.Line2D(
+            [0], [0],
+            marker="o", linestyle="-", color="black",
+            markerfacecolor="black", markeredgecolor="black",
+            label="Correct"
+        ),
+        plt.Line2D(
+            [0], [0],
+            marker="o", linestyle="-", color="black",
+            markerfacecolor="white", markeredgecolor="black",
+            label="Perseverative error"
+        ),
+    ]
+
+    fig.legend(handles=style_handles, frameon=False, loc="upper center", ncol=2)
+    fig.suptitle(
+        f"Behavior Around Block Switches — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"],
+        y=1.01
+    )
+
+    plt.tight_layout()
+    plt.savefig(outdir / f"Adaptive_SwitchBehavior_PaperStyle_ByStrain_{stage}.pdf",
+                bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_SwitchBehavior_PaperStyle_ByStrain_{stage}.png",
+                dpi=600, bbox_inches="tight")
+    plt.savefig(outdir / f"Adaptive_SwitchBehavior_PaperStyle_ByStrain_{stage}.svg",
+                 bbox_inches="tight")
+
+
+
+
+def process_session_pe_proportions(row, window=20):
+    try:
+        df = read_csv_cached(row["path"]).copy()
+    except Exception as e:
+        print(f"⚠ Could not read {row['filename']}: {e}")
+        return None
+
+    needed_cols = {"block", "reward", "punishment", "omission", "8KHz", "16KHz"}
+    if not needed_cols.issubset(df.columns):
+        print(f"⚠ Missing columns for PE analysis in {row['filename']}")
+        return None
+
+    tone_map = get_tone_map(row["animal"])
+
+    A2S_pe = 0
+    S2A_pe = 0
+    A2S_valid = 0
+    S2A_valid = 0
+
+    for i in range(1, len(df)):
+        prev_block = df.loc[i - 1, "block"]
+        new_block = df.loc[i, "block"]
+
+        if prev_block == new_block:
+            continue
+
+        if prev_block in ["action-left", "action-right"] and new_block == "sound":
+            direction = "Action→Sound"
+        elif prev_block == "sound" and new_block in ["action-left", "action-right"]:
+            direction = "Sound→Action"
+        else:
+            continue
+
+        next_trials = df.iloc[i:i + window].copy()
+
+        for _, tr in next_trials.iterrows():
+            pe = classify_pe_after_switch(tr, new_block, prev_block, tone_map)
+
+            # only count trials that could actually be classified
+            if not np.isnan(pe):
+                if direction == "Action→Sound":
+                    A2S_valid += 1
+                    A2S_pe += int(pe)
+                else:
+                    S2A_valid += 1
+                    S2A_pe += int(pe)
+
+    return {
+        "Action→Sound_prop": A2S_pe / A2S_valid if A2S_valid > 0 else np.nan,
+        "Sound→Action_prop": S2A_pe / S2A_valid if S2A_valid > 0 else np.nan,
+        "Action→Sound_n": A2S_valid,
+        "Sound→Action_n": S2A_valid,
+    }
+
+def compute_pe_proportion_tables(sessions_df, window=20):
+    print(f"\n=== Computing PE proportions in first {window} trials after switch ===")
+
+    pe_records = []
+
+    for _, row in sessions_df.iterrows():
+        res = process_session_pe_proportions(row, window=window)
+        if res is None:
+            continue
+
+        pe_records.append({
+            "animal": row["animal"],
+            "session_date": row["session_date"],
+            "session_id": f"{row['animal']}_{row['session_date']}",
+            "strain": row["strain"],
+            "stage": row["stage"],
+            "Action→Sound": res["Action→Sound_prop"],
+            "Sound→Action": res["Sound→Action_prop"],
+            "Action→Sound_n": res["Action→Sound_n"],
+            "Sound→Action_n": res["Sound→Action_n"],
+        })
+
+    pe_prop_df = pd.DataFrame(pe_records)
+
+    if pe_prop_df.empty:
+        print("⚠ No PE proportion data available.")
+    else:
+        print(pe_prop_df.head())
+
+    return pe_prop_df
+
+def plot_pe_triangle_first20_proportion(pe_df, outdir, strain_colors, stage):
+    df_stage = pe_df[pe_df["stage"] == stage].copy()
+
+    if df_stage.empty:
+        print(f"⚠ No PE data for stage: {stage}")
+        return
+
+    rng = np.random.default_rng(42)
+
+    fig, ax = plt.subplots(figsize=(9, 6), dpi=plot_config["dpi"])
+
+    x_positions = np.array([0.7, 1.25])
+    mean_x = x_positions + 0.18
+    label_x = (x_positions + mean_x) / 2
+    x_labels = ["Action→Sound", "Sound→Action"]
+    ax.set_xlim(0.55, 1.55)
+
+    # per-session points
+    for _, row in df_stage.iterrows():
+        color = strain_colors.get(row["strain"], "gray")
+
+        j1 = (rng.random() - 0.5) * 0.06
+        j2 = (rng.random() - 0.5) * 0.06
+
+        ax.scatter(
+            x_positions[0] + j1,
+            row["Action→Sound"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8,
+        )
+
+        ax.scatter(
+            x_positions[1] + j2,
+            row["Sound→Action"],
+            marker="^",
+            s=130,
+            facecolors=color,
+            edgecolors=color,
+            linewidths=1.8,
+        )
+
+    mean_A2S = df_stage["Action→Sound"].mean()
+    mean_S2A = df_stage["Sound→Action"].mean()
+
+    sem_A2S = df_stage["Action→Sound"].sem()
+    sem_S2A = df_stage["Sound→Action"].sem()
+
+    ax.errorbar(
+        mean_x[0],
+        mean_A2S,
+        yerr=sem_A2S,
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2,
+        zorder=5
+    )
+
+    ax.errorbar(
+        mean_x[1],
+        mean_S2A,
+        yerr=sem_S2A,
+        fmt="^",
+        markersize=12,
+        color="black",
+        capsize=4,
+        linewidth=2,
+        zorder=5
+    )
+
+    ax.set_xticks(label_x)
+    ax.set_xticklabels(x_labels, fontsize=plot_config["tick_fontsize"])
+    ax.set_ylim(0, 1.0)
+    ax.set_ylabel(
+        "Proportion of perseverative errors",
+        fontsize=plot_config["label_fontsize"],
+        labelpad=plot_config["ylabel_pad"]
+    )
+    ax.set_title(
+        f"Perseverative Errors in First 20 Trials After Switch — {stage.capitalize()}",
+        fontsize=plot_config["title_fontsize"]
+    )
+    ax.tick_params(labelsize=plot_config["tick_fontsize"])
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    handles = [
+        plt.Line2D(
+            [0], [0],
+            marker="^",
+            linestyle="",
+            markersize=9,
+            markerfacecolor=color,
+            markeredgewidth=1.8,
+            markeredgecolor=color,
+            color=color,
+            label=strain
+        )
+        for strain, color in strain_colors.items()
+        if strain in df_stage["strain"].astype(str).unique()
+    ]
+
+    fig.legend(handles=handles, title="Strain", frameon=False)
+    plt.tight_layout()
+    plt.savefig(outdir / f"Adaptive_PE_TrianglePlot_First20_Proportion_{stage}.pdf",
+                bbox_inches="tight")
 
 #%%
 
@@ -3338,10 +4173,56 @@ def main():
 
     plot_actionblock_choice_bias(df_choice_bias, OUTDIR, STRAIN_COLORS, stage="naive")
     plot_actionblock_choice_bias(df_choice_bias, OUTDIR, STRAIN_COLORS, stage="trained")
+    
+    df_opposite = compute_actionblock_opposite_sound_table(sessions_df)
+    df_opposite.to_csv(OUTDIR / "actionblock_opposite_sound_behavior.csv", index=False)
 
+    df_opposite_fl = compute_opposite_sound_first_last(df_opposite)
+    df_opposite_fl.to_csv(OUTDIR / "actionblock_opposite_sound_first_last.csv", index=False)
+    
+    plot_opposite_sound_actionblocks(df_opposite, OUTDIR, STRAIN_COLORS, stage="naive") 
+    plot_opposite_sound_actionblocks(df_opposite, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    plot_opposite_sound_first_last(df_opposite_fl, OUTDIR, STRAIN_COLORS, stage="naive")
+    plot_opposite_sound_first_last(df_opposite_fl, OUTDIR, STRAIN_COLORS, stage="trained")
+
+    behavior_timecourse_df, session_behavior_timecourse_df = (
+        compute_switch_behavior_timecourse_tables(
+            sessions_df,
+            pre_window=20,
+            post_window=60
+        )
+    )
+
+    behavior_timecourse_df.to_csv(
+        OUTDIR / "adaptive_switch_behavior_timecourse_all_trials.csv",
+        index=False
+    )
+    session_behavior_timecourse_df.to_csv(
+        OUTDIR / "adaptive_switch_behavior_timecourse_session_means.csv",
+        index=False
+    )
+
+    plot_switch_behavior_timecourse_by_strain(
+    session_behavior_timecourse_df, OUTDIR, STRAIN_COLORS, stage="naive"
+    )
+    plot_switch_behavior_timecourse_by_strain(
+    session_behavior_timecourse_df, OUTDIR, STRAIN_COLORS, stage="trained"
+    )
+
+    pe_prop_df = compute_pe_proportion_tables(sessions_df, window=20)
+
+    plot_pe_triangle_first20_proportion(
+    pe_prop_df, OUTDIR, STRAIN_COLORS, stage="naive"
+    )
+    plot_pe_triangle_first20_proportion(
+    pe_prop_df, OUTDIR, STRAIN_COLORS, stage="trained"
+    )
 
     print("Done.")
     return metrics_df, sessions_df, performance_table, percentcorrect_table
+
+
 
 
 if __name__ == "__main__":
