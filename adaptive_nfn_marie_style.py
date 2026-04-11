@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  1 18:00:16 2026
+Created on Fri Apr 10 18:12:06 2026
 
 @author: JoanaCatarino
 """
@@ -35,9 +35,10 @@ BEHAVIOR_QC_FILE = Path(
 )
 
 OUTDIR = Path(
-    r"L:/dmclab/Joana/PFC-Str_behavior_project/Nfn"
+    r"L:/dmclab/Joana/PFC-Str_behavior_project/Nfn/test"
 )
 OUTDIR.mkdir(parents=True, exist_ok=True)
+
 
 #%% Plot settings
 
@@ -46,10 +47,24 @@ OUTDIR.mkdir(parents=True, exist_ok=True)
 # ============================================================
 
 STRAIN_COLORS = {
-    "Tlx3": "#32929D",
-    "Fezf2": "#B1536F",
-    "Fmr1-Fezf2": "#5B5B56", # "#C7601B" - original orange color
-    "Fmr1-Tlx3": "#87B663",  
+    "Tlx3": "#393838",
+    "Fezf2": "#828282",
+    "Fmr1-Fezf2": "#AB395B",
+    "Fmr1-Tlx3": "#87B663",
+}
+
+STRAIN_LINE_COLORS = {
+    "Tlx3": "#494848",       
+    "Fezf2": "#ACA9A9",      
+    "Fmr1-Fezf2": "#D17D97", 
+    "Fmr1-Tlx3": "#BFD6A8",  
+}
+
+STRAIN_LABELS = {
+    "Tlx3": r"$\bf{L5\ IT}$ (Tlx3-Cre) n=5",
+    "Fezf2": r"$\bf{L5\ PT}$ (Fezf2-CreER) n=4",
+    "Fmr1-Fezf2": r"$\bf{Fmr1}$ (x Fezf2-CreER) n=3",
+    "Fmr1-Tlx3": r"$\bf{Fmr1}$ (x Tlx3-Cre)",
 }
 
 STRAIN_ORDER = ["Tlx3", "Fezf2", "Fmr1-Fezf2", "Fmr1-Tlx3"]
@@ -72,33 +87,32 @@ plot_config = {
     "top_margin": 0.85,
     "ylabel_pad": 14,
     "legend_fontsize": 14,
-    "marker_size": 11,
+    "marker_size": 9,
     "summary_marker_size": 11,
     "capsize": 4,
     "linewidth": 2.0,
-    "connection_linewidth": 1.5,
-    "box_linewidth": 1.8,
-    "stage_gap_single": 0.78,
-    "strain_gap_single": 0.08,
-    "box_width_single": 0.12,
-    
-    "stage_gap_category": 0.90,
-    "strain_gap_category": 0.10,
+    "connection_linewidth": 1.2,
+    "box_linewidth": 1.6,
+
+    "stage_gap_single": 1.0,
+    "strain_gap_single": 0.18,
+    "box_width_single": 0.14,
+
+    "stage_gap_category": 1.3,
+    "strain_gap_category": 0.28,
     "box_width_category": 0.22,
-    
-    "animal_jitter": 0.02,
-    "category_jitter": 0.02,
-    
-    "dot_cluster_sep_single": 0.16,
-    "dot_cluster_sep_category": 0.18
-    
-    
+
+    "animal_jitter": 0.012, 
+    "category_jitter": 0.012,
+
+    "dot_cluster_sep_single": 0.0,
+    "dot_cluster_sep_category": 0.0
 }
 
 plt.rcParams.update({
-    "axes.facecolor": "none",        # axes transparent
-    "figure.facecolor": "white",      # figure transparent
-    "savefig.facecolor": "none",     # saved file transparent
+    "axes.facecolor": "none",
+    "figure.facecolor": "white",
+    "savefig.facecolor": "none",
     "savefig.edgecolor": "none",
 
     "axes.linewidth": 1.2,
@@ -268,13 +282,14 @@ def add_strain_legend(fig, df, color_dict):
     handles = [
         Line2D(
             [0], [0],
-            marker="o",
+            marker="s",
             linestyle="",
             markersize=10,
             markerfacecolor=color_dict[s],
-            markeredgecolor="black",
+            markeredgecolor="none",
+            markeredgewidth=0,
             color=color_dict[s],
-            label=s,
+            label=STRAIN_LABELS.get(s, s),
         )
         for s in present_strains
     ]
@@ -288,7 +303,7 @@ def add_strain_legend(fig, df, color_dict):
             facecolor=None,
             fontsize=plot_config["legend_fontsize"],
             loc="center left",
-            bbox_to_anchor=(1.02, 0.5),
+            bbox_to_anchor=(1.02, 0.75),
             borderpad=0.8,
             labelspacing=0.4,
             handletextpad=0.5,
@@ -303,7 +318,7 @@ def get_stage_centers_single():
 
 
 def get_stage_centers_category(category_order):
-    centers = np.arange(len(category_order)) * 3.1
+    centers = np.arange(len(category_order)) * 3.6
     half_gap = plot_config["stage_gap_category"] / 2
     stage_pos = {
         "naive": centers - half_gap,
@@ -327,18 +342,11 @@ def get_strain_offsets(present_strains, mode="single"):
 
 
 def get_box_and_dot_positions(base_x, strain_offset, mode="single"):
-    if mode == "single":
-        cluster_sep = plot_config["dot_cluster_sep_single"]
-    else:
-        cluster_sep = plot_config["dot_cluster_sep_category"]
-
-    dot_cluster_center = base_x - cluster_sep / 2
-    box_cluster_center = base_x + cluster_sep / 2
-
-    dot_x = dot_cluster_center + strain_offset
-    box_x = box_cluster_center + strain_offset
-
-    return box_x, dot_x
+    """
+    Put dots directly on top of the box center.
+    """
+    x = base_x + strain_offset
+    return x, x
 
 
 def add_stage_labels_below_categories(ax, category_order, stage_pos):
@@ -520,41 +528,38 @@ def draw_colored_boxplot(ax, values, position, color, width):
     if len(values) == 0:
         return
 
-    light_color = lighten_color(color, amount=0.6)
+    # slightly stronger fill color
+    light_color = lighten_color(color, amount=0.2)
 
-    # Quartiles and median (same idea as your Julia version)
     q1, med, q3 = np.quantile(values, [0.25, 0.50, 0.75])
     iqr = q3 - q1
 
-    # Julia-style whiskers:
-    # whisker limits = Q1 - 1.5*IQR and Q3 + 1.5*IQR,
-    # then clipped to the actual min/max of the data
     w_low = max(np.min(values), q1 - 1.5 * iqr)
     w_high = min(np.max(values), q3 + 1.5 * iqr)
 
     cap = width * 0.55
     lw = plot_config["box_linewidth"]
 
-    # Box
+    # Box (no outline)
     ax.fill(
         [position - width / 2, position + width / 2, position + width / 2, position - width / 2],
         [q1, q1, q3, q3],
         facecolor=light_color,
-        edgecolor=color,
-        linewidth=lw,
+        edgecolor="none",
+        linewidth=0,
         zorder=2,
     )
 
-    # Median
+    # Median (white, thicker)
     ax.plot(
         [position - width / 2, position + width / 2],
         [med, med],
-        color=color,
-        linewidth=lw,
+        color="white",
+        linewidth=lw * 1.4,
         zorder=3,
     )
 
-    # Whiskers
+    # 🔥 Whiskers in SAME COLOR as group
     ax.plot(
         [position, position],
         [w_low, q1],
@@ -570,7 +575,7 @@ def draw_colored_boxplot(ax, values, position, color, width):
         zorder=2,
     )
 
-    # Caps
+    # 🔥 Caps in SAME COLOR as group
     ax.plot(
         [position - cap / 2, position + cap / 2],
         [w_low, w_low],
@@ -586,15 +591,23 @@ def draw_colored_boxplot(ax, values, position, color, width):
         zorder=2,
     )
 
-def lighten_color(color, amount=0.5):
+def lighten_color(color, amount=0.35):
     """
     Lightens the given color.
-    amount=0 → original color
-    amount=1 → white
+    amount=0 -> original color
+    amount=1 -> white
     """
     c = mcolors.to_rgb(color)
     return tuple(1 - (1 - x) * (1 - amount) for x in c)
 
+def darken_color(color, amount=0.2):
+    """
+    Darkens the given color.
+    amount=0 → original color
+    amount=1 → black
+    """
+    c = mcolors.to_rgb(color)
+    return tuple(x * (1 - amount) for x in c)
 
 #%% Generic plotting
 
@@ -650,7 +663,7 @@ def plot_animal_stage_metric(
             base_x = stage_centers[stage]
             strain_offset = strain_offsets[strain]
             box_x, dot_x = get_box_and_dot_positions(base_x, strain_offset, mode="single")
-            all_x.extend([box_x, dot_x])
+            all_x.append(box_x)
 
             draw_colored_boxplot(
                 ax=ax,
@@ -660,43 +673,45 @@ def plot_animal_stage_metric(
                 width=plot_config["box_width_single"],
             )
 
-    # connect same animal across stages using dot positions
+    # connect same animal across stages
     pivot_df = animal_df.pivot_table(
         index=["animal", "strain"],
         columns="stage",
         values="mean_value",
         aggfunc="first"
     ).reset_index()
-
+    
     for _, row in pivot_df.iterrows():
         strain = row["strain"]
         if strain not in strain_offsets:
             continue
-
+    
         if pd.notna(row.get("naive")) and pd.notna(row.get("trained")):
             animal = str(row["animal"])
-            color = strain_colors.get(strain, "gray")
-
+    
             base_x1 = stage_centers["naive"]
             base_x2 = stage_centers["trained"]
             strain_offset = strain_offsets[strain]
-
+    
             _, dot_x1 = get_box_and_dot_positions(base_x1, strain_offset, mode="single")
             _, dot_x2 = get_box_and_dot_positions(base_x2, strain_offset, mode="single")
-
+    
             x1 = dot_x1 + jitter_map[animal]
             x2 = dot_x2 + jitter_map[animal]
+    
+            # 🔥 pale line in same color as group
+            line_color = STRAIN_LINE_COLORS[strain]
 
             ax.plot(
                 [x1, x2],
                 [row["naive"], row["trained"]],
-                color=color,
-                alpha=0.35,
-                linewidth=plot_config["connection_linewidth"],
+                color=line_color,
+                alpha=0.3,
+                linewidth=1.8,
                 zorder=1,
             )
 
-    # animal dots, placed in the left cluster
+    # animal dots on top of boxes
     for _, row in animal_df.iterrows():
         animal = str(row["animal"])
         strain = row["strain"]
@@ -707,15 +722,16 @@ def plot_animal_stage_metric(
         strain_offset = strain_offsets[strain]
         _, dot_x = get_box_and_dot_positions(base_x, strain_offset, mode="single")
         x = dot_x + jitter_map[animal]
-        color = strain_colors.get(strain, "gray")
+
+        color = darken_color(strain_colors[strain], amount=0.5)  # full strength color
 
         ax.scatter(
             x,
             row["mean_value"],
-            s=110,
+            s=60,
             color=color,
-            edgecolor="black",
-            linewidth=1.2,
+            edgecolors="none",
+            linewidths=0,
             zorder=3,
         )
 
@@ -801,7 +817,7 @@ def plot_animal_stage_metric_by_category(
                 base_x = stage_pos[stage][idx]
                 strain_offset = strain_offsets[strain]
                 box_x, dot_x = get_box_and_dot_positions(base_x, strain_offset, mode="category")
-                all_x.extend([box_x, dot_x])
+                all_x.append(box_x)
 
                 draw_colored_boxplot(
                     ax=ax,
@@ -811,47 +827,49 @@ def plot_animal_stage_metric_by_category(
                     width=plot_config["box_width_category"],
                 )
 
-    # connect same animal within each category using dot positions
+    # connect same animal within each category
     for cat in category_order:
         idx = cat_to_idx[cat]
         cat_df = animal_df[animal_df[category_col] == cat].copy()
-
+    
         pivot_df = cat_df.pivot_table(
             index=["animal", "strain"],
             columns="stage",
             values="mean_value",
             aggfunc="first"
         ).reset_index()
-
+    
         for _, row in pivot_df.iterrows():
             strain = row["strain"]
             if strain not in strain_offsets:
                 continue
-
+    
             if pd.notna(row.get("naive")) and pd.notna(row.get("trained")):
                 animal = str(row["animal"])
-                color = strain_colors.get(strain, "gray")
-
+    
                 base_x1 = stage_pos["naive"][idx]
                 base_x2 = stage_pos["trained"][idx]
                 strain_offset = strain_offsets[strain]
-
+    
                 _, dot_x1 = get_box_and_dot_positions(base_x1, strain_offset, mode="category")
                 _, dot_x2 = get_box_and_dot_positions(base_x2, strain_offset, mode="category")
-
+    
                 x1 = dot_x1 + jitter_map[animal]
                 x2 = dot_x2 + jitter_map[animal]
-
+    
+                # 🔥 pale line in same color as group
+                line_color = STRAIN_LINE_COLORS[strain]
+    
                 ax.plot(
                     [x1, x2],
                     [row["naive"], row["trained"]],
-                    color=color,
-                    alpha=0.35,
-                    linewidth=plot_config["connection_linewidth"],
+                    color=line_color,
+                    alpha=0.3,
+                    linewidth=1.8,
                     zorder=1,
                 )
 
-    # animal dots, placed in the left cluster
+    # animal dots on top of boxes
     for _, row in animal_df.iterrows():
         cat = row[category_col]
         strain = row["strain"]
@@ -863,15 +881,16 @@ def plot_animal_stage_metric_by_category(
         strain_offset = strain_offsets[strain]
         _, dot_x = get_box_and_dot_positions(base_x, strain_offset, mode="category")
         x = dot_x + jitter_map[animal]
-        color = strain_colors.get(strain, "gray")
+
+        color = darken_color(strain_colors[strain], amount=0.5)  # full strength color
 
         ax.scatter(
             x,
             row["mean_value"],
-            s=110,
+            s=60,
             color=color,
-            edgecolor="black",
-            linewidth=1.2,
+            edgecolors="none",
+            linewidths=0,
             zorder=3,
         )
 
