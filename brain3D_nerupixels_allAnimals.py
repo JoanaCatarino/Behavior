@@ -1,35 +1,48 @@
-# %%
 # -*- coding: utf-8 -*-
-
 """
-Created on Sun Mar 29 13:39:06 2026
+Created on Sun May 24 19:16:32 2026
 
 @author: JoanaCatarino
 """
 
+import os
+from pathlib import Path
 
-import os 
-from pathlib import Path 
-
-import numpy as np 
-import pandas as pd 
-import pyvista as pv 
+import numpy as np
+import pandas as pd
+import pyvista as pv
 
 pv.set_jupyter_backend("none")
 pv.global_theme.notebook = False
 
-import matplotlib.pyplot as plt 
-from matplotlib.patches import Patch 
-from brainglobe_atlasapi import BrainGlobeAtlas 
-
+import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
+from brainglobe_atlasapi import BrainGlobeAtlas
 
 
 # =============================================================================
 # USER SETTINGS
 # =============================================================================
 
-PROBE_FOLDER = Path(r"L:\dmclab\Joana\PFC-Str_behavior_project\Histology\986168\all_probes")
+ROOT_PROBE_FOLDER = Path(
+    r"L:\dmclab\Joana\PFC-Str_behavior_project\Histology"
+)
+
 FILE_PATTERN = "*neuropixels_probe*.csv"
+
+# Probes to exclude from the 3D plot
+# Use either full file names or parts of file names
+EXCLUDE_PROBES = [
+    #"986170_20251201_imec1_str_neuropixels_probe3.csv",
+    #"986170_20251211_imec1_str_neuropixels_probe7.csv",
+    #"986170_20251125_imec0_str_neuropixels_probe1.csv",
+    #"986170_20251125_imec1_pfc_neuropixels_probe0.csv",
+    #"986170_20251201_imec0_pfc_neuropixels_probe2.csv",
+    #"999770_20251206_imec0_str_neuropixels_probe5.csv",
+    #"999770_20251206_imec1_pfc_neuropixels_probe4.csv",
+
+]
+
 
 ATLAS_NAME = "allen_mouse_10um"
 VOXEL_SIZE_UM = 10.0
@@ -37,9 +50,8 @@ VOXEL_SIZE_UM = 10.0
 BRAIN_COLOR = "lightgray"
 BRAIN_ALPHA = 0.10
 
-REGION_ALPHA = 0.15
+REGION_ALPHA = 0.10
 
-PROBE_COLOR = "black"
 PROBE_LINE_WIDTH = 8
 RENDER_PROBES_AS_TUBES = True
 PROBE_TUBE_RADIUS_UM = 18
@@ -59,30 +71,47 @@ REGIONS_TO_COLOR = [
     "FRP",
 ]
 
+# Animal ID : experimental group
+ANIMAL_GROUPS = {
+    "986170": "fezf2",
+    "999770": "tlx3",
+    "986235": "tlx3",
+    "986171": "fezf2",
+    "986168": "fezf2",
+    
+}
+
+GROUP_COLORS = {
+    "tlx3": "#DA821D",
+    "fezf2": "#B55CB5",
+    "fmr1-tlx3": "#2ca02c",
+    "fmr1-fezf2": "#d62728",
+}
+
 
 # =============================================================================
 # OUTPUT SETTINGS
 # =============================================================================
 
-OUTPUT_DIR = PROBE_FOLDER
+OUTPUT_DIR = ROOT_PROBE_FOLDER / "all_animals_3d_probe_plot"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-LEGEND_PNG = OUTPUT_DIR / "manual_region_legend.png"
-LEGEND_CSV = OUTPUT_DIR / "manual_region_legend.csv"
+LEGEND_PNG = OUTPUT_DIR / "group_legend.png"
+LEGEND_CSV = OUTPUT_DIR / "group_legend.csv"
 
 SAVE_SCREENSHOT = False
-SCREENSHOT_PATH = OUTPUT_DIR / "brain_regions_probes.png"
+SCREENSHOT_PATH = OUTPUT_DIR / "all_animals_brain_probes.png"
 
 SAVE_PNG = False
-PNG_PATH = OUTPUT_DIR / "brain_regions_probes_pub.png"
+PNG_PATH = OUTPUT_DIR / "all_animals_brain_probes_pub.png"
 PNG_SCALE = 4
 WINDOW_SIZE = (1800, 1400)
 
 SAVE_VECTOR = False
-VECTOR_PATH = OUTPUT_DIR / "brain_regions_probes_pub.pdf"
+VECTOR_PATH = OUTPUT_DIR / "all_animals_brain_probes_pub.pdf"
 
 SAVE_MOVIE = True
-MOVIE_PATH = OUTPUT_DIR / "brain_rotation.mp4"
+MOVIE_PATH = OUTPUT_DIR / "all_animals_brain_rotation.mp4"
 MOVIE_FRAMES = 180
 MOVIE_ORBIT_FACTOR = 1.6
 MOVIE_VIEWUP = (0, 0, 1)
@@ -93,6 +122,34 @@ MOVIE_VIEWUP = (0, 0, 1)
 # =============================================================================
 
 REQUIRED_COLUMNS = ["ap_coords", "dv_coords", "ml_coords"]
+
+
+def find_probe_files_for_animals(root_folder: Path, animal_groups: dict):
+    records = []
+
+    for animal_id, group in animal_groups.items():
+        animal_folder = root_folder / animal_id / "all_probes"
+
+        if not animal_folder.exists():
+            print(f"WARNING: folder does not exist for animal {animal_id}: {animal_folder}")
+            continue
+
+        probe_files = sorted(animal_folder.glob(FILE_PATTERN))
+
+        if not probe_files:
+            print(f"WARNING: no probe files found for animal {animal_id}")
+            continue
+
+        for probe_file in probe_files:
+            records.append(
+                {
+                    "animal_id": animal_id,
+                    "group": group,
+                    "csv_path": probe_file,
+                }
+            )
+
+    return records
 
 
 def load_probe_csv(csv_path: Path, use_only_inside_brain: bool = True) -> np.ndarray:
@@ -122,8 +179,7 @@ def load_probe_csv(csv_path: Path, use_only_inside_brain: bool = True) -> np.nda
     coords_um = np.column_stack([x_um, y_um, z_um])
 
     _, unique_idx = np.unique(coords_um, axis=0, return_index=True)
-    unique_idx = np.sort(unique_idx)
-    coords_um = coords_um[unique_idx]
+    coords_um = coords_um[np.sort(unique_idx)]
 
     if len(coords_um) < 2:
         raise ValueError(f"{csv_path.name} does not contain enough valid points.")
@@ -191,8 +247,6 @@ def get_region_info(atlas: BrainGlobeAtlas, query: str):
 def load_mesh_clean(mesh_path: Path) -> pv.PolyData:
     mesh = pv.read(str(mesh_path))
 
-    # BrainGlobe .obj meshes are already surface meshes.
-    # Avoid extract_surface(), because it is likely triggering the VTK popup.
     try:
         mesh = mesh.extract_surface()
     except Exception:
@@ -202,8 +256,8 @@ def load_mesh_clean(mesh_path: Path) -> pv.PolyData:
         mesh = mesh.triangulate()
     except Exception:
         pass
-    
-    try: 
+
+    try:
         mesh = mesh.smooth(n_iter=20, relaxation_factor=0.01)
     except Exception:
         pass
@@ -211,12 +265,7 @@ def load_mesh_clean(mesh_path: Path) -> pv.PolyData:
     return mesh
 
 
-def add_surface_mesh(
-    plotter: pv.Plotter,
-    mesh: pv.DataSet,
-    color,
-    opacity: float,
-):
+def add_surface_mesh(plotter, mesh, color, opacity):
     plotter.add_mesh(
         mesh,
         color=color,
@@ -230,11 +279,11 @@ def add_surface_mesh(
 
 
 def add_probe_line(
-    plotter: pv.Plotter,
-    tract: np.ndarray,
-    color="black",
-    line_width: float = 4,
-    as_tube: bool = True,
+    plotter,
+    tract,
+    color,
+    line_width=4,
+    as_tube=True,
 ):
     line = pv.Line(tract[0], tract[1])
 
@@ -259,45 +308,42 @@ def add_probe_line(
         )
 
 
-def save_legend(region_table, png_path: Path, csv_path: Path):
-    if not region_table:
-        print("No regions were added, so legend is empty.")
-        return
+def save_group_legend(group_colors, animal_groups, png_path: Path, csv_path: Path):
+    rows = []
 
-    df = (
-        pd.DataFrame(region_table)
-        .drop_duplicates(subset=["acronym"])
-        .sort_values("acronym")
-        .reset_index(drop=True)
-    )
+    for animal_id, group in animal_groups.items():
+        rows.append(
+            {
+                "animal_id": animal_id,
+                "group": group,
+                "color_hex": group_colors[group],
+            }
+        )
 
+    df = pd.DataFrame(rows)
     df.to_csv(csv_path, index=False)
 
-    fig_h = max(2.0, 0.35 * len(df) + 0.8)
-    fig, ax = plt.subplots(figsize=(8, fig_h))
+    groups = sorted(df["group"].unique())
 
     handles = [
         Patch(
-            facecolor=row["color_hex"],
+            facecolor=group_colors[group],
             edgecolor="black",
-            label=f'{row["acronym"]} | {row["name"]}',
+            label=group,
         )
-        for _, row in df.iterrows()
+        for group in groups
     ]
 
-    ax.legend(handles=handles, loc="upper left", frameon=False, fontsize=9)
+    fig_h = max(2.0, 0.4 * len(groups) + 0.8)
+    fig, ax = plt.subplots(figsize=(5, fig_h))
+    ax.legend(handles=handles, loc="upper left", frameon=False, fontsize=10)
     ax.axis("off")
     plt.tight_layout()
     fig.savefig(png_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
-def export_publication_outputs(
-    plotter: pv.Plotter,
-    png_path: Path,
-    vector_path: Path,
-    movie_path: Path,
-):
+def export_publication_outputs(plotter, png_path, vector_path, movie_path):
     plotter.reset_camera()
     plotter.show(interactive=True, auto_close=False)
 
@@ -342,18 +388,28 @@ def export_publication_outputs(
 # =============================================================================
 
 def main():
-    probe_files = sorted(PROBE_FOLDER.glob(FILE_PATTERN))
+    probe_records = find_probe_files_for_animals(ROOT_PROBE_FOLDER, ANIMAL_GROUPS)
 
-    if not probe_files:
-        raise FileNotFoundError(
-            f"No files matching '{FILE_PATTERN}' were found in:\n{PROBE_FOLDER}"
-        )
+    if not probe_records:
+        raise FileNotFoundError("No probe files were found for the selected animals.")
 
-    print(f"Found {len(probe_files)} probe file(s).")
+    print(f"Found {len(probe_records)} probe file(s) from several animals.")
+
+    missing_colors = sorted(
+        set(ANIMAL_GROUPS.values()) - set(GROUP_COLORS.keys())
+    )
+
+    if missing_colors:
+        raise ValueError(f"Missing colors for groups: {missing_colors}")
 
     atlas = BrainGlobeAtlas(ATLAS_NAME)
 
-    plotter = pv.Plotter(window_size=WINDOW_SIZE, off_screen=False, notebook=False,)
+    plotter = pv.Plotter(
+        window_size=WINDOW_SIZE,
+        off_screen=False,
+        notebook=False,
+    )
+
     plotter.set_background("white")
     plotter.image_scale = PNG_SCALE
 
@@ -369,10 +425,9 @@ def main():
         opacity=BRAIN_ALPHA,
     )
 
-    region_table = []
-    added_acronyms = set()
-
     print("\nTrying to add requested regions:")
+
+    added_acronyms = set()
 
     for query in REGIONS_TO_COLOR:
         info = get_region_info(atlas, query)
@@ -390,7 +445,6 @@ def main():
             mesh_path = atlas.meshfile_from_structure(acr)
 
             print(f"Adding region: {query} -> {acr} ({info['name']})")
-            print(f"  mesh: {mesh_path}")
 
             region_mesh = load_mesh_clean(mesh_path)
 
@@ -401,33 +455,52 @@ def main():
                 opacity=REGION_ALPHA,
             )
 
-            region_table.append(info)
             added_acronyms.add(acr)
 
         except Exception as e:
             print(f"Could not render region {acr}: {e}")
 
-    for csv_path in probe_files:
-        print(f"Loading: {csv_path.name}")
+    print("\nAdding probes:")
 
+    print("\nAdding probes:")
+
+    for record in probe_records:
+        animal_id = record["animal_id"]
+        group = record["group"]
+        csv_path = record["csv_path"]
+    
+        # Skip excluded probes
+        if any(excluded in csv_path.name for excluded in EXCLUDE_PROBES):
+            print(f"SKIPPING excluded probe: {animal_id} | {csv_path.name}")
+            continue
+    
+        color = GROUP_COLORS[group]
+    
+        print(f"{animal_id} | {group} | {csv_path.name}")
+    
         raw_points = load_probe_csv(
             csv_path,
             use_only_inside_brain=USE_ONLY_INSIDE_BRAIN,
         )
-
+    
         tract = make_linear_tract(raw_points, extend_um=EXTEND_TRACT_UM)
-
+    
         add_probe_line(
             plotter=plotter,
             tract=tract,
-            color=PROBE_COLOR,
+            color=color,
             line_width=PROBE_LINE_WIDTH,
             as_tube=RENDER_PROBES_AS_TUBES,
         )
 
-    save_legend(region_table, LEGEND_PNG, LEGEND_CSV)
+    save_group_legend(
+        group_colors=GROUP_COLORS,
+        animal_groups=ANIMAL_GROUPS,
+        png_path=LEGEND_PNG,
+        csv_path=LEGEND_CSV,
+    )
 
-    print("\nSaved legend:")
+    print("\nSaved group legend:")
     print(LEGEND_CSV)
     print(LEGEND_PNG)
 
@@ -436,22 +509,20 @@ def main():
     plotter.show(interactive=True, auto_close=False)
 
     if SAVE_SCREENSHOT:
-        plotter.show(auto_close=False)
         plotter.screenshot(str(SCREENSHOT_PATH))
         print(f"Saved screenshot: {SCREENSHOT_PATH}")
-
-    else: 
-        export_publication_outputs( 
-            plotter=plotter, 
-            png_path=PNG_PATH, 
-            vector_path=VECTOR_PATH, 
+    else:
+        export_publication_outputs(
+            plotter=plotter,
+            png_path=PNG_PATH,
+            vector_path=VECTOR_PATH,
             movie_path=MOVIE_PATH,
-            ) 
-        
-        plotter.close() 
-        
-        print("\nAll outputs folder:") 
-        print(OUTPUT_DIR)
+        )
+
+    plotter.close()
+
+    print("\nAll outputs folder:")
+    print(OUTPUT_DIR)
 
 
 if __name__ == "__main__":

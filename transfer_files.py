@@ -12,7 +12,7 @@ from collections import defaultdict
 
 # Paths
 transfering_folder = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/transfering"
-data_base_folder = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/Cohort_2"
+data_base_folder = r"L:/dmclab/Joana/PFC-Str_behavior_project/Behavior/Cohort_3"
 
 # Pattern to extract animal ID and date from the filename
 pattern = r"_([0-9]{7})_([0-9]{8})_"

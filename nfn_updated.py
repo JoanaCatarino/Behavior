@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Apr 17 09:31:11 2026
+
+@author: JoanaCatarino
+"""
+"""
 Created on Fri Apr 10 18:12:06 2026
 
 @author: JoanaCatarino
@@ -1330,7 +1335,7 @@ def compute_percentomissions_tables(sessions_df):
 
 
 # ============================================================
-# PERSEVERATIVE ERRORS
+# PERSEVERATIVE ERRORS (NORMALIZED PER SWITCH)
 # ============================================================
 
 def correct_side(block_type, stim, tone_map):
@@ -1370,7 +1375,7 @@ def classify_pe_after_switch(row, new_block, prev_block, tone_map):
     return np.nan
 
 
-def process_session_pe_counts_fixed(row, window=20):
+def process_session_pe_per_switch(row, window=20):
     try:
         df = read_csv_cached(row["path"]).copy()
     except Exception as e:
@@ -1382,10 +1387,17 @@ def process_session_pe_counts_fixed(row, window=20):
         print(f"⚠ Missing columns for PE analysis in {row['filename']}")
         return None
 
-    tone_map = get_tone_map(row["animal"])
+    try:
+        tone_map = get_tone_map(row["animal"])
+    except Exception as e:
+        print(f"⚠ Could not get tone map for animal {row['animal']}: {e}")
+        return None
 
-    A2S_count = 0
-    S2A_count = 0
+    A2S_pe_total = 0
+    S2A_pe_total = 0
+
+    A2S_n_switches = 0
+    S2A_n_switches = 0
 
     for i in range(1, len(df)):
         prev_block = df.loc[i - 1, "block"]
@@ -1396,8 +1408,10 @@ def process_session_pe_counts_fixed(row, window=20):
 
         if prev_block in ["action-left", "action-right"] and new_block == "sound":
             direction = "Action→Sound"
+            A2S_n_switches += 1
         elif prev_block == "sound" and new_block in ["action-left", "action-right"]:
             direction = "Sound→Action"
+            S2A_n_switches += 1
         else:
             continue
 
@@ -1407,23 +1421,31 @@ def process_session_pe_counts_fixed(row, window=20):
             pe = classify_pe_after_switch(tr, new_block, prev_block, tone_map)
             if not np.isnan(pe):
                 if direction == "Action→Sound":
-                    A2S_count += pe
+                    A2S_pe_total += pe
                 else:
-                    S2A_count += pe
+                    S2A_pe_total += pe
 
     return {
-        "Action→Sound": A2S_count,
-        "Sound→Action": S2A_count,
+        "Action→Sound": (
+            A2S_pe_total / A2S_n_switches if A2S_n_switches > 0 else np.nan
+        ),
+        "Sound→Action": (
+            S2A_pe_total / S2A_n_switches if S2A_n_switches > 0 else np.nan
+        ),
+        "n_Action→Sound_switches": A2S_n_switches,
+        "n_Sound→Action_switches": S2A_n_switches,
+        "Action→Sound_total_pe": A2S_pe_total,
+        "Sound→Action_total_pe": S2A_pe_total,
     }
 
 
 def compute_pe_tables(sessions_df, window=20):
-    print("\n=== Computing perseverative errors around block switches ===")
+    print("\n=== Computing perseverative errors per switch around block switches ===")
 
     pe_records = []
 
     for _, row in sessions_df.iterrows():
-        res = process_session_pe_counts_fixed(row, window=window)
+        res = process_session_pe_per_switch(row, window=window)
         if res is None:
             continue
 
@@ -1435,6 +1457,10 @@ def compute_pe_tables(sessions_df, window=20):
             "stage": row["stage"],
             "Action→Sound": res["Action→Sound"],
             "Sound→Action": res["Sound→Action"],
+            "n_Action→Sound_switches": res["n_Action→Sound_switches"],
+            "n_Sound→Action_switches": res["n_Sound→Action_switches"],
+            "Action→Sound_total_pe": res["Action→Sound_total_pe"],
+            "Sound→Action_total_pe": res["Sound→Action_total_pe"],
         })
 
     pe_df = pd.DataFrame(pe_records)
@@ -1442,7 +1468,7 @@ def compute_pe_tables(sessions_df, window=20):
     if pe_df.empty:
         print("⚠ No PE data available.")
     else:
-        print("\n=== PE TABLE ===")
+        print("\n=== PE PER SWITCH TABLE ===")
         print(pe_df.head())
 
     return pe_df
@@ -1606,6 +1632,103 @@ def compute_omission_after_switch_tables(sessions_df, window=20):
 
     return df
 
+#%%
+# ============================================================
+# OMISSIONS AFTER SWITCH (NORMALIZED PER SWITCH)
+# ============================================================
+
+def process_session_omissions_per_switch(row, window=20):
+    try:
+        df = read_csv_cached(row["path"]).copy()
+    except Exception as e:
+        print(f"⚠ Could not read {row['filename']}: {e}")
+        return None
+
+    needed_cols = {"block", "omission"}
+    if not needed_cols.issubset(df.columns):
+        print(f"⚠ Missing columns for omission analysis in {row['filename']}")
+        return None
+
+    A2S_om_total = 0
+    S2A_om_total = 0
+
+    A2S_n_switches = 0
+    S2A_n_switches = 0
+
+    for i in range(1, len(df)):
+        prev_block = df.loc[i - 1, "block"]
+        new_block = df.loc[i, "block"]
+
+        if prev_block == new_block:
+            continue
+
+        if prev_block in ["action-left", "action-right"] and new_block == "sound":
+            direction = "Action→Sound"
+            A2S_n_switches += 1
+        elif prev_block == "sound" and new_block in ["action-left", "action-right"]:
+            direction = "Sound→Action"
+            S2A_n_switches += 1
+        else:
+            continue
+
+        next_trials = df.iloc[i:i + window].copy()
+        omission_count = (next_trials["omission"] == 1).sum()
+
+        if direction == "Action→Sound":
+            A2S_om_total += omission_count
+        else:
+            S2A_om_total += omission_count
+
+    return {
+        "Action→Sound": (
+            A2S_om_total / A2S_n_switches if A2S_n_switches > 0 else np.nan
+        ),
+        "Sound→Action": (
+            S2A_om_total / S2A_n_switches if S2A_n_switches > 0 else np.nan
+        ),
+        "n_Action→Sound_switches": A2S_n_switches,
+        "n_Sound→Action_switches": S2A_n_switches,
+        "Action→Sound_total_omissions": A2S_om_total,
+        "Sound→Action_total_omissions": S2A_om_total,
+    }
+
+
+def compute_omission_switch_tables(sessions_df, window=20):
+    print("\n=== Computing omissions per switch around block switches ===")
+
+    omission_records = []
+
+    for _, row in sessions_df.iterrows():
+        res = process_session_omissions_per_switch(row, window=window)
+        if res is None:
+            continue
+
+        omission_records.append({
+            "animal": row["animal"],
+            "session_date": row["session_date"],
+            "session_id": f"{row['animal']}_{row['session_date']}",
+            "strain": row["strain"],
+            "stage": row["stage"],
+            "Action→Sound": res["Action→Sound"],
+            "Sound→Action": res["Sound→Action"],
+            "n_Action→Sound_switches": res["n_Action→Sound_switches"],
+            "n_Sound→Action_switches": res["n_Sound→Action_switches"],
+            "Action→Sound_total_omissions": res["Action→Sound_total_omissions"],
+            "Sound→Action_total_omissions": res["Sound→Action_total_omissions"],
+        })
+
+    omission_df = pd.DataFrame(omission_records)
+
+    if omission_df.empty:
+        print("⚠ No omission-after-switch data available.")
+    else:
+        print("\n=== OMISSIONS PER SWITCH TABLE ===")
+        print(omission_df.head())
+
+    return omission_df
+
+
+
 
 
 
@@ -1763,20 +1886,20 @@ def plot_pe_triangle_animals(pe_df):
         id_vars=["animal", "session_date", "session_id", "strain", "stage"],
         value_vars=["Action→Sound", "Sound→Action"],
         var_name="switch_type",
-        value_name="pe_count"
+        value_name="pe_per_switch"
     )
 
     return plot_animal_stage_metric_by_category(
         df=df_long,
         category_col="switch_type",
-        value_col="pe_count",
+        value_col="pe_per_switch",
         category_order=["Action→Sound", "Sound→Action"],
         category_labels=["Action→Sound", "Sound→Action"],
-        ylabel="Number of perseverative errors",
+        ylabel="Perseverative errors per switch",
         title="Perseverative errors after block switches",
         strain_colors=STRAIN_COLORS,
         selected_strains=SELECTED_STRAINS,
-        ylim=(0, 70),
+        ylim=(0, 20),
     )
 
 
@@ -1820,6 +1943,29 @@ def plot_omissions_triangle_animals(om_df):
         ylim=(0, 70),  # adjust if needed
     )
 
+
+
+
+def plot_omissions_triangle_animals(omission_df):
+    df_long = omission_df.melt(
+        id_vars=["animal", "session_date", "session_id", "strain", "stage"],
+        value_vars=["Action→Sound", "Sound→Action"],
+        var_name="switch_type",
+        value_name="omissions_per_switch"
+    )
+
+    return plot_animal_stage_metric_by_category(
+        df=df_long,
+        category_col="switch_type",
+        value_col="omissions_per_switch",
+        category_order=["Action→Sound", "Sound→Action"],
+        category_labels=["Action→Sound", "Sound→Action"],
+        ylabel="Omissions per switch",
+        title="Omissions after block switches",
+        strain_colors=STRAIN_COLORS,
+        selected_strains=SELECTED_STRAINS,
+        ylim=(0, 20),
+    )
 #%% PE time-course plot
 
 # ============================================================
@@ -2138,6 +2284,9 @@ def plot_omission_timecourse(session_timecourse_df, stage, strain_colors):
     plt.tight_layout()
     return fig, axes
 
+
+
+
 #%% Main 
 
 # ============================================================
@@ -2210,6 +2359,7 @@ def main():
     pe_first_last_df = compute_pe_first_last_blocks(sessions_df, window=20)
     pe_timecourse_df, session_pe_timecourse_df = compute_pe_timecourse_tables(sessions_df, window=20)
     om_tc_df, session_om_tc_df = compute_omission_timecourse_tables(sessions_df, window=20)
+    omission_switch_df = compute_omission_switch_tables(sessions_df, window=20)
     
     om_switch_df = compute_omission_after_switch_tables(sessions_df, window=20)
 
@@ -2370,6 +2520,10 @@ def main():
     fig, _ = plot_omission_timecourse(session_om_tc_df, stage="trained", strain_colors=STRAIN_COLORS)
     if fig is not None:
         save_figure(fig, "omission_timecourse_post")
+        
+    fig, _ = plot_omissions_triangle_animals(omission_switch_df)
+    if fig is not None:
+        save_figure(fig, "omissions_switchtype_per_animal_stage")
 
 
     print("Done.")
